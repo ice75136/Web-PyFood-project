@@ -22,6 +22,7 @@ import cross_icon from './cross_icon.png'
 import logo from './logo.png'
 import hero_img from './hero_img.jpg'
 import support_img from './support_img.png'
+import delivery_img from './delivery.png'
 
 export const assets = {
     cart_icon,
@@ -37,7 +38,8 @@ export const assets = {
     cross_icon,
     logo,
     hero_img,
-    support_img
+    support_img,
+    delivery_img
 }
 
 export const products = [
@@ -49,7 +51,7 @@ export const products = [
     image: [p_img1, p_img00, p_img01],  
     category: "PorkAndChicken",
     subCategory: "Pack",
-    sizes: ["1000g"],
+    sizes: ["500g","1000g"],
     date: new Date('2024-07-01T10:00:00').getTime(),
     bestseller: true
   },

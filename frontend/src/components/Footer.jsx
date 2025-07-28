@@ -18,7 +18,7 @@ const Footer = () => {
                     <li>HOME</li>
                     <li>About us</li>
                     <li>Delivery</li>
-                    <li>Privacy policy</li>
+                    {/* <li>Privacy policy</li> */}
                 </ul>
             </div>
 
@@ -32,10 +32,10 @@ const Footer = () => {
 
         </div>
 
-        <div>
+        {/* <div>
             <hr />
             <p className='py-5 text-sm text-center'>Copyright 2024@ forever.com All Right Reserved.</p>
-        </div>
+        </div> */}
 
     </div>
   )
