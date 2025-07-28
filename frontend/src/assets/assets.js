@@ -1,3 +1,5 @@
+import p_img00 from './ochaimg1.png'
+import p_img01 from './ochaimg2.png'
 import p_img1 from './mooyong.png'
 import p_img2 from './kaiyong.png'
 import p_img3 from './numjimlukchin.png'
@@ -44,7 +46,7 @@ export const products = [
     name: "หมูหยองเบเกอรี่ (หมูผสมไก่)",
     description: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Ipsam inventore est officiis quibusdam deleniti assumenda.",
     price: 170, 
-    image: [p_img1],  
+    image: [p_img1, p_img00, p_img01],  
     category: "PorkAndChicken",
     subCategory: "Pack",
     sizes: ["1000g"],
