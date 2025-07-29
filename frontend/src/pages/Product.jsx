@@ -61,6 +61,7 @@ const Product = () => {
           </div>
           <p className='mt-5 text-3xl font-medium'>{currency}{productData.price}</p>
           <p className='mt-5 text-gray-500 md:w-4/5'>{productData.description}</p>
+              {/* Size */}
           <div className='flex flex-col gap-4 my-8'>
               <p>Select Size</p>
               <div className='flex gap-2'>
@@ -69,9 +70,28 @@ const Product = () => {
                 ))}
               </div>
           </div>
+          <button className='bg-black text-white px-8 py-3 text-sm active:bg-gray-700'>ADD TO CART</button>
+          <hr className='mt-8 sm:w-4/5'/>
+          <div className='text-sm text-gray-500 mt-5 flex flex-col gap-1'>
+              <p>ส่งตั้งแต่จันทร์ - ศุกร์</p>
+              <p>ตัดรอบ 11 โมงของทุกวัน</p>
+              <p>รับประกันความอร่อย</p>
+          </div>
         </div>
       </div>
-        
+
+      {/* Description & Review Section */}
+      <div className='mt-20'>
+        <div className='flex'>
+          <b className='border border-gray-300 px-5 py-3 text-sm'>Description</b>
+          <p className='border border-gray-300 px-5 py-3 text-sm'>Reviews (122)</p>
+        </div>
+        <div className='flex flex-col gap-4 border border-gray-300 px-6 py-6 text-sm text-gray-500'>
+          <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Blanditiis corrupti temporibus iure deleniti commodi ad distinctio, vero explicabo, reprehenderit quasi perspiciatis atque velit sunt laborum facere officiis consequatur quidem dicta!</p>
+          <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Sunt, delectus consequatur vero ab, quisquam consectetur nemo distinctio enim veritatis, quibusdam iste. Odit fugiat fugit voluptate laboriosam consectetur excepturi voluptatum molestiae.</p>
+        </div>
+      </div>
+
     </div>
   ) : <div className=' opacity-0'></div>
 }

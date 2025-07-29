@@ -51,7 +51,7 @@ export const products = [
     image: [p_img1, p_img00, p_img01],  
     category: "PorkAndChicken",
     subCategory: "Pack",
-    sizes: ["500g","1000g"],
+    sizes: ["500g"],
     date: new Date('2024-07-01T10:00:00').getTime(),
     bestseller: true
   },

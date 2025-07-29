@@ -14,22 +14,22 @@ const Navbar = () => {
         
       <Link to='/'><img src={assets.logo} className='w-20' alt="" /></Link>
 
-      <ul className='hidden sm:flex gap-5 text-sm text-gray-700'>
+      <ul className='hidden sm:flex gap-5 text-lg text-gray-700'>
 
         <NavLink to='/' className='flex flex-col items-center gap-1'>
-          <p>HOME</p>
+          <p>หน้าหลัก</p>
           <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden' />
         </NavLink>
         <NavLink to='/collection' className='flex flex-col items-center gap-1'>
-          <p>PRODUCTS</p>
+          <p>สินค้า</p>
           <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden' />
         </NavLink>
         <NavLink to='/about' className='flex flex-col items-center gap-1'>
-          <p>ABOUT</p>
+          <p>เกี่ยวกับ</p>
           <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden' />
         </NavLink>
         <NavLink to='/contact' className='flex flex-col items-center gap-1'>
-          <p>CONTACT</p>
+          <p>ติดต่อ</p>
           <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden' />
         </NavLink>
 
