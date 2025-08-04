@@ -23,6 +23,8 @@ import logo from './logo.png'
 import hero_img from './hero_img.jpg'
 import support_img from './support_img.png'
 import delivery_img from './delivery.png'
+import stripe_logo from './stripe_logo.png'
+import razorpay_logo from './razorpay_logo.png'
 
 export const assets = {
     cart_icon,
@@ -39,7 +41,9 @@ export const assets = {
     logo,
     hero_img,
     support_img,
-    delivery_img
+    delivery_img,
+    stripe_logo,
+    razorpay_logo
 }
 
 export const products = [
