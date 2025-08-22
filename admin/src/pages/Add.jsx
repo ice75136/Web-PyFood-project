@@ -54,10 +54,10 @@ const Add = () => {
             <p>Sub category</p>
             <select>
               <option value="">Pack</option>
+              <option value="">snack_hanger</option>
               <option value="">Bottle</option>
               <option value="">Jar</option>
               <option value="">Carton</option>
-              <option value=""></option>
             </select>
           </div>
 

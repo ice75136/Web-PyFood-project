@@ -120,6 +120,9 @@ const Collection = () => {
                 <input className='w-3' type="checkbox" value={'Pack'} onChange={toggleSubCategory}/> แพ็ค
               </p>
               <p className='flex gap-2'>
+                <input className='w-3' type="checkbox" value={'snack_hanger'} onChange={toggleSubCategory}/> แผง
+              </p>
+              <p className='flex gap-2'>
                 <input className='w-3' type="checkbox" value={'Jar'} onChange={toggleSubCategory}/> กระปุก
               </p>
               <p className='flex gap-2'>
