@@ -16,8 +16,28 @@ const Add = () => {
   const [bestseller, setBestseller] = useState(false);
   const [sizes, setSizes] = useState("");
 
+  const onSubmitHandler = async () => {
+    e.preventDefault();
+
+    try {
+
+      const formData = new FormData()
+
+      formData.append("name",name)
+      formData.append("description",description)
+      formData.append("price",price)
+      formData.append("category",category)
+      formData.append("subCategory",subCategory)
+      formData.append("bestseller",bestseller)
+      formData.append("sizes",sizes)
+      
+    } catch (error) {
+      
+    }
+  }
+
   return (
-    <form className='flex flex-col w-full items-start gap-3'>
+    <form onSubmit={onSubmitHandler} className='flex flex-col w-full items-start gap-3'>
         <div>
           <p className='mb-2'>Upload Image</p>
           
@@ -92,7 +112,7 @@ const Add = () => {
         </div>
 
         <div className='flex gap-2 mt-2'>
-          <input type="checkbox" id="bestseller" />
+          <input onChange={() => setBestseller(prev => !prev)} checked={bestseller} type="checkbox" id="bestseller" />
           <label className='cursor-pointer' htmlFor="bestseller">Add to bestseller</label>
         </div>
 
