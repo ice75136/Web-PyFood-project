@@ -50,7 +50,7 @@ const List = ({ token }) => {
 
   return (
     <>
-      <p className='mb-2'>All Products List</p>
+      <p className='mb-2'>All Products List {list.length}</p>
       <div className='flex flex-col gap-2'>
 
         {/* ----- List Table Title ------ */}
@@ -72,7 +72,7 @@ const List = ({ token }) => {
               <p>{item.name}</p>
               <p>{item.category}</p>
               <p>{currency}{item.price}</p>
-              <p onClick={()=>removeProduct(item._id)} className='text-right md:text-center cursor-pointer text-lg'>X</p>
+              <p onClick={()=>removeProduct(item._id)} className='text-right md:text-center cursor-pointer text-lg text-red-600'>ลบ</p>
             </div>
           ))
         }

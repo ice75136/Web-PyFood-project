@@ -115,6 +115,7 @@ const Add = ({token}) => {
               <option value="Pack">แพ็ค</option>
               <option value="snack_hanger">แผง</option>
               <option value="Bottle">ขวด</option>
+              <option value="Sauce">ถุง</option>
               <option value="Jar">กระปุก</option>
               <option value="Carton">ลัง</option>
             </select>
