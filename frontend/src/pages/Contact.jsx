@@ -19,11 +19,11 @@ const Contact = () => {
           <p className='text-gray-500'>Tel: (66) 99 999 9999 <br /> Email: pyfood@gmail.com</p>
           <p className='font-semibold text-xl text-gray-600'>Carrers at forever</p>
           <p className='text-gray-500'>Learn more about our teams and job openings.</p>
-          <button className='border border-black px-8 py-4 text-sm hover:bg-black hover:text-white transition-all duration-500'>Explore Jobs</button>
+          {/* <button className='border border-black px-8 py-4 text-sm hover:bg-black hover:text-white transition-all duration-500'>Explore Jobs</button> */}
         </div>
       </div>
 
-      <NewsletterBox/>
+      {/* <NewsletterBox/> */}
     </div>
   )
 }
