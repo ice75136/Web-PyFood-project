@@ -64,7 +64,7 @@ const Add = ({token}) => {
   return (
     <form onSubmit={onSubmitHandler} className='flex flex-col w-full items-start gap-3'>
         <div>
-          <p className='mb-2'>Upload Image</p>
+          <p className='mb-2'>อัพโหลดรูปภาพ</p>
           
           <div className='flex gap-2'>
             <label htmlFor="image1">
@@ -87,30 +87,30 @@ const Add = ({token}) => {
         </div>
 
         <div className='w-full'>
-          <p className='mb-2'>Product name</p>
+          <p className='mb-2'>ชื่อสินค้า</p>
           <input onChange={(e) => setName(e.target.value)} value={name} className='w-full max-w-[500px] px-3 py-2' type="text" placeholder='Type here' required />
         </div>
 
         <div className='w-full'>
-          <p className='mb-2'>Product description</p>
+          <p className='mb-2'>คำอธิบายสินค้า</p>
           <textarea onChange={(e) => setDescription(e.target.value)} value={description} className='w-full max-w-[500px] px-3 py-2' type="text" placeholder='Write content here' required />
         </div>
 
         <div className='flex flex-col sm:flex-row gap-2 w-full sm:gap-8'>
 
           <div>
-            <p className='mb-2'>Product category</p>
+            <p className='mb-2'>ประเภทสินค้า</p>
             <select onChange={(e) => setCategory(e.target.value)} className='w-full px-3 py-2'>
               <option value="Pork">หมู</option>
               <option value="Chicken">ไก่</option>
-              <option value="PorkAndChicken">หมูและไก่</option>
+              <option value="PorkAndChicken">หมูผสมไก่</option>
               <option value="Sauce">น้ำจิ้ม</option>
-              <option value="Chili-sauce">น้ำพริก</option>
+              <option value="Chili_sauce">น้ำพริก</option>
             </select>
           </div>
 
           <div>
-            <p className='mb-2'>Sub category</p>
+            <p className='mb-2'>ประเภทบรรจุภัณฑ์</p>
             <select onChange={(e) => setSubCategory(e.target.value)} className='w-full px-3 py-2'>
               <option value="Pack">แพ็ค</option>
               <option value="snack_hanger">แผง</option>
@@ -122,15 +122,15 @@ const Add = ({token}) => {
           </div>
 
           <div>
-            <p className='mb-2'>Product Price</p>
+            <p className='mb-2'>ราคาสินค้า</p>
             <input onChange={(e) => setPrice(e.target.value)} value={price} className='w-full px-3 py-2 sm:w-[120px]' type="number" placeholder='25'/>
           </div>
 
           <div>
-            <p className='mb-2'>Product Sizes</p>
+            <p className='mb-2'>ขนาดสินค้า</p>
             <div>
               <div>
-                <input onChange={(e)=> setSizes(e.target.value)} value={sizes } className='w-full px-3 py-2 sm:w-[120px]' type="number" placeholder='Write sizes here' />
+                <input onChange={(e)=> setSizes(e.target.value)} value={sizes } className='w-full px-3 py-2 sm:w-[120px]' type="number" placeholder='100 กรัม' />
               </div>
             </div>
           </div>
@@ -139,10 +139,10 @@ const Add = ({token}) => {
 
         <div className='flex gap-2 mt-2'>
           <input onChange={() => setBestseller(prev => !prev)} checked={bestseller} type="checkbox" id="bestseller" />
-          <label className='cursor-pointer' htmlFor="bestseller">Add to bestseller</label>
+          <label className='cursor-pointer' htmlFor="bestseller">เพิ่มเป็นสินค้าขายดี</label>
         </div>
 
-        <button type="submit" className='w-28 py-3 mt-4 bg-black text-white cursor-pointer'>ADD</button>
+        <button type="submit" className='w-28 py-3 mt-4 bg-black text-white cursor-pointer'>เพิ่มสินค้า</button>
 
 
     </form>
