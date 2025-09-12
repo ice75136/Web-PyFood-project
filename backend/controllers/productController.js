@@ -88,5 +88,41 @@ const singleProduct = async (req, res) => {
     }
 }
 
-export { listProducts, addProduct, removeProduct, singleProduct }
+// function for update product 
+const updateProduct = async (req,res) => {
+    try {
 
+        const {productId, name, description, price, category, subCategory, sizes, bestseller} = req.body
+        const updateProduct = await productModel.findByIdAndUpdate(productId,{name, description, price, category, subCategory, sizes, bestseller})
+
+        res.json({ success: true, message: "Product Updated" })
+        
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message })
+    }
+}
+
+export { listProducts, addProduct, removeProduct, singleProduct, updateProduct }
+
+// const updateProduct = async (req, res) => {
+//   try {
+//     const { productId, name, description, price, category, subCategory, sizes, bestseller } = req.body;
+
+//     const updatedProduct = await productModel.findByIdAndUpdate(
+//       productId,
+//       { name, description, price, category, subCategory, sizes, bestseller },
+//       { new: true, runValidators: true } // important options
+//     );
+
+//     if (!updatedProduct) {
+//       return res.status(404).json({ success: false, message: "Product not found" });
+//     }
+
+//     res.json({ success: true, message: "Product Updated", data: updatedProduct });
+
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
