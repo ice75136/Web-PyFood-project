@@ -3,10 +3,12 @@ import React, { useEffect, useState } from 'react'
 import { backendUrl, currency } from '../App'
 import { toast } from 'react-toastify'
 import categoryThai from '../../thai/categoryThai'
+import EditProduct from '../components/EditProduct'
 
 const List = ({ token }) => {
 
   const [list, setList] = useState([])
+  const [openEdit, setOpenEdit] = useState(false)
 
   const fetchList = async () => {
     try {
@@ -74,14 +76,16 @@ const List = ({ token }) => {
               <p>{categoryThai[item.category]}</p>
               <p>{item.price}.00</p>
               <div className='grid grid-cols-2'>
-                <p className='text-right md:text-center cursor-pointer text-lg text-amber-600'>แก้ไข</p>
+                <p onClick={()=>setOpenEdit(true)} className='text-right md:text-center cursor-pointer text-lg text-amber-600'>แก้ไข</p>
                 <p onClick={()=>removeProduct(item._id)} className=' md:text-center cursor-pointer text-lg text-red-600'>ลบ</p>
               </div>
             </div>
           ))
         }
-
       </div>
+      
+      <EditProduct open={openEdit} onClose={() => setOpenEdit(false)} />
+      
     </>
   )
 }
