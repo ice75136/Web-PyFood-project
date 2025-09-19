@@ -9,6 +9,7 @@ const List = ({ token }) => {
 
   const [list, setList] = useState([])
   const [openEdit, setOpenEdit] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   const fetchList = async () => {
     try {
@@ -76,7 +77,7 @@ const List = ({ token }) => {
               <p>{categoryThai[item.category]}</p>
               <p>{item.price}.00</p>
               <div className='grid grid-cols-2'>
-                <p onClick={()=>setOpenEdit(true)} className='text-right md:text-center cursor-pointer text-lg text-amber-600'>แก้ไข</p>
+                <p onClick={()=> {setSelectedProduct(item); setOpenEdit(true);}} className='text-right md:text-center cursor-pointer text-lg text-amber-600'>แก้ไข</p>
                 <p onClick={()=>removeProduct(item._id)} className=' md:text-center cursor-pointer text-lg text-red-600'>ลบ</p>
               </div>
             </div>
@@ -84,7 +85,7 @@ const List = ({ token }) => {
         }
       </div>
       
-      <EditProduct open={openEdit} onClose={() => setOpenEdit(false)} />
+      <EditProduct open={openEdit} onClose={() => setOpenEdit(false)} product={selectedProduct} fetchList={fetchList} token={token}/>
       
     </>
   )
