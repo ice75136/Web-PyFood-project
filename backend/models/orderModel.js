@@ -1,15 +1,34 @@
-import mongoose, { mongo } from 'mongoose'
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/sequelize.js';
 
-const orderSchema = new mongoose.Schema({
-    userId: { type: String, required: true},
-    items: { type: Array, required: true},
-    amount: { type: Number, required: true},
-    address: { type: Object, required: true},
-    status: { type: String, required: true, default:'OrderPlaced' },
-    paymentMethod: { type: String, required: true},
-    payment: { type: Boolean, required: true, default: false},
-    date: { type: Number, required: true}
-})
+const Order = sequelize.define('Order', {
+    id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true
+    },
+    total_amount: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false
+    },
+    order_status: {
+        type: DataTypes.STRING,
+        defaultValue: 'pending' // สถานะเริ่มต้นคือ 'รอการชำระเงิน'
+    },
+    // Foreign Keys ที่จะเชื่อมกับตารางอื่น
+    user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
+    user_address_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    }
+}, {
+    tableName: 'orders',
+    timestamps: true,
+    createdAt: 'order_date', // Map createdAt ของ Sequelize ให้ตรงกับคอลัมน์ order_date ของเรา
+    updatedAt: false // เราไม่มีคอลัมน์ updatedAt
+});
 
-const orderModel = mongoose.models.order || mongoose.model('order',orderSchema)
-export default orderModel;
+export default Order;
