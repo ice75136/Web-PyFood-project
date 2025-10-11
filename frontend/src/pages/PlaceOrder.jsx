@@ -18,7 +18,7 @@ const PlaceOrder = () => {
     subDistrict: '',      // แขวง/ตำบล
     road: '',             // ถนน
     alley: '',            // ซอย
-    moo: '',              // หมู่
+    moo: '',              // หมู่ Village Number
     houseNumber: '',      // บ้านเลขที่
     postCode: '',         // รหัสไปรษณีย์
     addressDetails: '',   // รายระเอียดที่อยู่

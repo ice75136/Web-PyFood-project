@@ -7,14 +7,19 @@ const UserAddress = sequelize.define('UserAddress', {
         autoIncrement: true,
         primaryKey: true
     },
-    address_line1: {
-        type: DataTypes.TEXT,
+    user_id: {
+        type: DataTypes.INTEGER,
         allowNull: false
     },
-    address_line2: {
-        type: DataTypes.TEXT
+    first_name: {
+        type: DataTypes.STRING,
+        allowNull: false
     },
-    city: {
+    last_name: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    phone: {
         type: DataTypes.STRING,
         allowNull: false
     },
@@ -22,21 +27,43 @@ const UserAddress = sequelize.define('UserAddress', {
         type: DataTypes.STRING,
         allowNull: false
     },
+    district: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    sub_district: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
     postal_code: {
         type: DataTypes.STRING,
         allowNull: false
     },
+    house_number: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    road: {
+        type: DataTypes.STRING
+    },
+    alley: {
+        type: DataTypes.STRING
+    },
+    villageNumber: {
+        type: DataTypes.STRING,
+        field: 'village_number'
+    },
+    address_details: {
+        type: DataTypes.TEXT
+    },
     is_default: {
         type: DataTypes.BOOLEAN,
-        defaultValue: false
-    },
-    user_id: {
-        type: DataTypes.INTEGER,
+        defaultValue: false,
         allowNull: false
     }
 }, {
     tableName: 'user_addresses',
-    timestamps: false 
+    timestamps: false
 });
 
 export default UserAddress;
