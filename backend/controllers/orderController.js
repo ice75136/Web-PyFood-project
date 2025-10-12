@@ -147,21 +147,23 @@ const verifyStripe = async (req,res) => {
     }
 }
 
-// Placing orders using Razorpay Methid
-const placeOrderRazorpay = async (req,res) => {
-    
-}
 
 // All Orders data for admin panel
-const allOrders = async (req,res) => {
+const listAllOrders = async (req,res) => {
     try {
 
-        const orders = await orderModel.find({})
-        res.json({success:true,orders})
+        const orders = await db.Order.findAll({
+            include: {
+                model: db.User,
+                attributes: ['id', 'username', 'email'] // ดึงมาเฉพาะข้อมูล user ที่จำเป็น
+            },
+            order: [['order_date', 'DESC']] // เรียงจากออเดอร์ล่าสุดไปเก่าสุด
+        });
+        res.status(200).json(orders);
         
     } catch (error) {
-        console.log(error);
-        res.json({success:false,message:error.message})
+        console.error("Error fetching all orders:", error);
+        res.status(500).json({ message: "Error fetching all orders" });
     }
 }
 
@@ -183,14 +185,25 @@ const userOrders = async (req,res) => {
 // update order status from AdminPanel
 const updateStatus = async (req,res) => {
     try {
-        const { orderId, status } = req.body
-        await orderModel.findByIdAndUpdate(orderId, { status })
-        res.json({success:true,message:'Status Updated'})
-        
-    } catch (error) {
-        console.log(error);
-        res.json({success:false,message:error.message})
-    }
-}
+        const { orderId, status } = req.body;
 
-export {verifyStripe, placeOrder, placeOrderStripe, placeOrderRazorpay, allOrders, userOrders, updateStatus}
+        // ค้นหา Order จาก ID
+        const order = await db.Order.findByPk(orderId);
+
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        // อัปเดตสถานะ
+        order.order_status = status;
+        await order.save();
+
+        res.status(200).json({ message: "Order status updated successfully", order });
+
+    } catch (error) {
+        console.error("Error updating order status:", error);
+        res.status(500).json({ message: "Error updating order status" });
+    }
+};
+
+export {verifyStripe, placeOrder, placeOrderStripe,  listAllOrders, userOrders, updateStatus}
