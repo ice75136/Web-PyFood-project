@@ -5,6 +5,7 @@ import db from '../models/index.js';
 
 // function for add product
 const addProduct = async (req, res) => {
+    console.log("Data received in req.body:", req.body);
     try {
         const files = req.files;
         const imageUrls = [];
@@ -45,12 +46,12 @@ const addProduct = async (req, res) => {
 const listProducts = async (req, res) => {
     try {
 
-        const products = await productModel.find({});
-        res.json({ success: true, products })
+        const products = await db.Product.findAll();
+        res.status(200).json(products);
 
     } catch (error) {
-        console.log(error)
-        res.json({ success: false, message: error.message })
+        console.error('Error fetching products:', error);
+        res.status(500).json({ message: 'Error fetching products' });
     }
 
 }
@@ -59,12 +60,21 @@ const listProducts = async (req, res) => {
 const removeProduct = async (req, res) => {
     try {
 
-        await productModel.findByIdAndDelete(req.body.id)
-        res.json({ success: true, message: "Product Removed" })
+        const { id } = req.body;
+
+        const product = await db.Product.findByPk(id);
+
+        if (!product) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+
+        await product.destroy();
+
+        res.status(200).json({ message: "Product removed successfully" });
 
     } catch (error) {
-        console.log(error)
-        res.json({ success: false, message: error.message })
+        console.error('Error removing product:', error);
+        res.status(500).json({ message: 'Error removing product' });
     }
 }
 
@@ -85,89 +95,45 @@ const singleProduct = async (req, res) => {
 // function for update product 
 const updateProduct = async (req, res) => {
     try {
-        const {
-            _id,
-            productId,
-            name,
-            description,
-            price,
-            category,
-            subCategory,
-            sizes,
-            bestseller,
-        } = req.body;
 
-        const id = _id || productId;
+        const { id, name, description, price, stock_quantity, category_id, product_type_id } = req.body;
 
-        // ดึงข้อมูลสินค้าปัจจุบันมาก่อน
-        const product = await productModel.findById(id);
+        const product = await db.Product.findByPk(id);
+
         if (!product) {
-            return res.json({ success: false, message: "ไม่พบสินค้า" });
+            return res.status(404).json({ message: "Product not found" });
         }
 
-        // ------------------ จัดการรูป ------------------
-        const image1 = req.files?.image1?.[0];
-        const image2 = req.files?.image2?.[0];
-        const image3 = req.files?.image3?.[0];
-        const image4 = req.files?.image4?.[0];
+        const files = req.files;
+        const imageUrls = product.images || [];
+        let mainImageUrl = product.image_url;
 
-        const images = [image1, image2, image3, image4].filter(Boolean);
-
-        let imagesUrl = [];
-
-        if (images.length > 0) {
-            // ถ้ามีรูปใหม่ → อัพโหลด Cloudinary
-            imagesUrl = await Promise.all(
-                images.map(async (item) => {
-                    let result = await cloudinary.uploader.upload(item.path, {
-                        resource_type: "image",
-                    });
-                    return result.secure_url;
-                })
-            );
+        if (files) {
+            if (files.image1) {
+                imageUrls[0] = files.image1[0].path;
+                mainImageUrl = files.image1[0].path;
+            }
+            if (files.image2) imageUrls[1] = files.image2[0].path;
+            if (files.image3) imageUrls[2] = files.image3[0].path;
+            if (files.image4) imageUrls[3] = files.image4[0].path;
         }
 
-        // รวมรูปเดิมกับรูปใหม่ (ถ้าอยาก replace ทั้งหมดใช้ imagesUrl แทน product.image)
-        const finalImages = [...product.image];
+        product.name = name || product.name;
+        product.description = description || product.description;
+        product.price = price || product.price;
+        product.stock_quantity = stock_quantity || product.stock_quantity;
+        product.category_id = category_id || product.category_id;
+        product.product_type_id = product_type_id || product.product_type_id;
+        product.image_url = mainImageUrl;
+        product.images = imageUrls;
 
-        // ถ้ามีไฟล์ใหม่ → อัพโหลด
-        if (image1) {
-            const result = await cloudinary.uploader.upload(image1.path, { resource_type: "image" });
-            finalImages[0] = result.secure_url; // แทนตำแหน่ง index 0 (รูปแรก)
-        }
-        if (image2) {
-            const result = await cloudinary.uploader.upload(image2.path, { resource_type: "image" });
-            finalImages[1] = result.secure_url; // index 1 (รูปสอง)
-        }
-        if (image3) {
-            const result = await cloudinary.uploader.upload(image3.path, { resource_type: "image" });
-            finalImages[2] = result.secure_url;
-        }
-        if (image4) {
-            const result = await cloudinary.uploader.upload(image4.path, { resource_type: "image" });
-            finalImages[3] = result.secure_url;
-        }
+        await product.save();
 
-        // ------------------ อัพเดทข้อมูล ------------------
-        const updated = await productModel.findByIdAndUpdate(
-            id,
-            {
-                name,
-                description,
-                price: Number(price),
-                category,
-                subCategory,
-                sizes: sizes ? JSON.parse(sizes) : product.sizes,
-                bestseller: bestseller === "true" || bestseller === true,
-                image: finalImages,
-            },
-            { new: true }
-        );
-
-        res.json({ success: true, message: "Product Updated", product: updated });
+        res.status(200).json({ message: "Product updated successfully", product: product });
+        
     } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: error.message });
+        console.error('Error updating product:', error);
+        res.status(500).json({ message: 'Error updating product' });
     }
 };
 

@@ -8,7 +8,7 @@ const Product = sequelize.define('Product', {
         primaryKey: true
     },
     name: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING,
         allowNull: false
     },
     description: {
@@ -18,6 +18,11 @@ const Product = sequelize.define('Product', {
     price: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false
+    },
+    stock_quantity: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0
     },
     image_url: {
         type: DataTypes.STRING
@@ -37,14 +42,14 @@ const Product = sequelize.define('Product', {
     category_id: {
         type: DataTypes.INTEGER
     },
-    Product_type_id: {
+    product_type_id: {
         type: DataTypes.INTEGER
     }
 }, {
     tableName: 'products',
     timestamps: true,
     createdAt: 'created_at',
-    updateAt: false
+    updatedAt: false
 });
 
 export default Product;

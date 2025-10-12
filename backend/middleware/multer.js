@@ -1,11 +1,7 @@
-import multer from "multer";
+import multer from 'multer';
+import { storage } from '../config/cloudinary.js'; // Import storage ของ Cloudinary เข้ามา
 
-const storage = multer.diskStorage({
-    filename:function(req,file,callback){
-        callback(null,file.originalname)
-    }
-})
+// สร้าง instance ของ Multer โดยใช้ storage engine ของ Cloudinary
+const upload = multer({ storage: storage });
 
-const upload = multer({storage})
-
-export default upload
+export default upload;

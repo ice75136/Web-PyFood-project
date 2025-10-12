@@ -9,7 +9,7 @@ const User = sequelise.define('User', {
     autoIncrement: true,
     primaryKey: true
   },
-  name: {
+  username: {
     type: DataTypes.STRING,
     allowNull: false
   },

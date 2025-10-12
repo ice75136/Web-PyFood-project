@@ -1,5 +1,6 @@
 import orderModel from "../models/orderModel.js"
 import userModel from "../models/userModel.js"
+import db from '../models/index.js';
 import Stripe from 'stripe'
 
 // global variables
@@ -10,33 +11,64 @@ const deliveryCharge = 10
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 // Placing orders using COD Method
-const placeOrder = async (req,res) => {
-    
+const placeOrder = async (req, res) => {
     try {
-        const { userId,items, amount, address} = req.body
+        const userId = req.user.id;
 
-        const orderData = {
-            userId,
-            items,
-            address,
-            amount,
-            paymentMethod:"ปลายทาง",
-            payment:false,
-            date: Date.now()
+        // รับที่อยู่ที่จะให้จัดส่งจาก frontend
+        const { user_address_id } = req.body;
+        if (!user_address_id) {
+            return res.status(400).json({ message: "Shipping address is required" });
         }
 
-        const newOrder = new orderModel(orderData)
-        await newOrder.save()
+        // ค้นหา user และข้อมูลตะกร้า
+        const user = await db.User.findByPk(userId);
+        const cartData = user.cartData || {};
+        const itemIds = Object.keys(cartData);
 
-        await userModel.findByIdAndUpdate(userId,{cardData:{}})
+        if (itemIds.length === 0) {
+            return res.status(400).json({ message: "Cart is empty" });
+        }
 
-        res.json({success:true,message:"Order Placed"})
+        // --- คำนวณยอดรวม (สำคัญ: ต้องดึงราคาล่าสุดจากฐานข้อมูลเสมอ) ---
+        let totalAmount = 0;
+        const productsInCart = await db.Product.findAll({ where: { id: itemIds } });
+
+        for (const product of productsInCart) {
+            const quantity = cartData[product.id];
+            totalAmount += product.price * quantity;
+        }
+        // ----------------------------------------------------------------
+
+        // 1. สร้าง Order (หัวบิล)
+        const newOrder = await db.Order.create({
+            user_id: userId,
+            user_address_id: user_address_id,
+            total_amount: totalAmount,
+            order_status: 'pending' // สถานะเริ่มต้น
+        });
+
+        // 2. สร้าง Order Items (รายการสินค้าในบิล)
+        const orderItemsData = productsInCart.map(product => ({
+            order_id: newOrder.id,
+            product_id: product.id,
+            quantity: cartData[product.id],
+            price_per_unit: product.price
+        }));
+        await db.OrderItem.bulkCreate(orderItemsData);
+
+        // 3. ล้างตะกร้าสินค้า
+        user.cartData = {};
+        user.changed('cartData', true);
+        await user.save();
+
+        res.status(201).json({ message: "Order placed successfully", orderId: newOrder.id });
 
     } catch (error) {
-        console.log(error);
-        res.json({success:false,message:error.message})
+        console.error("Error placing order:", error);
+        res.status(500).json({ message: "Error placing order" });
     }
-}
+};
 
 // Placing orders using Stripe Method
 const placeOrderStripe = async (req,res) => {
