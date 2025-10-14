@@ -14,8 +14,8 @@ const Add = ({token}) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
-  const [category, setCategory] = useState("Pork");
-  const [subCategory, setSubCategory] = useState("pack");
+  const [categoryId, setCategoryId] = useState("1");
+  const [productTypeId, setProductTypeId] = useState("1");
   const [bestseller, setBestseller] = useState(false);
   const [sizes, setSizes] = useState("");
 
@@ -28,21 +28,23 @@ const Add = ({token}) => {
 
       formData.append("name",name)
       formData.append("description",description)
-      formData.append("price",price)
-      formData.append("category",category)
-      formData.append("subCategory",subCategory)
+      formData.append("price",Number(price))
+      formData.append("category_id",categoryId)
+      formData.append("product_type_id",productTypeId)
       formData.append("bestseller",bestseller)
-      formData.append("sizes",sizes)
+      
+      const sizesArray = sizes.split(',').map(s => s.trim()).filter(s => s);
+      formData.append("sizes", JSON.stringify(sizesArray))
 
       image1 && formData.append("image1",image1)
       image2 && formData.append("image2",image2)
       image3 && formData.append("image3",image3)
       image4 && formData.append("image4",image4)
 
-      const response = await axios.post(backendUrl + "/api/product/add",formData,{headers:{token}})
+      const response = await axios.post(backendUrl + "/api/product/add",formData, { headers: { Authorization: `Bearer ${token}` } })
 
-      if (response.data.success) {
-        toast.success(response.data.message)
+      if (response.status === 201) {
+        toast.success("เพิ่มสินค้าสำเร็จ")
         setName('')
         setDescription('')
         setImage1(false)
@@ -52,12 +54,12 @@ const Add = ({token}) => {
         setPrice('')
         setSizes('')
       } else {
-        toast.error(response.data.message)
+        toast.error("เกิดข้อผิดพลาดในการเพิ่มสินค้า")
       }
       
     } catch (error) {
       console.log(error);
-      toast.error(error.message)
+      toast.error(error.response?.data?.message || error.message)
     }
   }
 
@@ -100,24 +102,23 @@ const Add = ({token}) => {
 
           <div>
             <p className='mb-2'>ประเภทสินค้า</p>
-            <select onChange={(e) => setCategory(e.target.value)} className='w-full px-3 py-2'>
-              <option value="Pork">หมู</option>
-              <option value="Chicken">ไก่</option>
-              <option value="PorkAndChicken">หมูผสมไก่</option>
-              <option value="Sauce">น้ำจิ้ม</option>
-              <option value="Chili_sauce">น้ำพริก</option>
+            <select onChange={(e) => setCategoryId(e.target.value)} value={categoryId} className='w-full px-3 py-2'>
+              <option value="1">หมู</option>
+              <option value="2">ไก่</option>
+              <option value="3">หมูผสมไก่</option>
+              <option value="4">น้ำจิ้ม</option>
+              <option value="5">น้ำพริก</option>
             </select>
           </div>
 
           <div>
             <p className='mb-2'>ประเภทบรรจุภัณฑ์</p>
-            <select onChange={(e) => setSubCategory(e.target.value)} className='w-full px-3 py-2'>
-              <option value="Pack">แพ็ค</option>
-              <option value="snack_hanger">แผง</option>
-              <option value="Bottle">ขวด</option>
-              <option value="Sauce">ถุง</option>
-              <option value="Jar">กระปุก</option>
-              <option value="Carton">ลัง</option>
+            <select onChange={(e) => setProductTypeId(e.target.value)} value={productTypeId} className='w-full px-3 py-2'>
+              <option value="1">แพ็ค</option>
+              <option value="2">แผง</option>
+              <option value="3">กระปุก</option>
+              <option value="4">ขวด</option>
+              <option value="5">ลัง</option>
             </select>
           </div>
 
@@ -127,10 +128,10 @@ const Add = ({token}) => {
           </div>
 
           <div>
-            <p className='mb-2'>ขนาดสินค้า</p>
+            <p className='mb-2'>ขนาด (กรัม)</p>
             <div>
               <div>
-                <input onChange={(e)=> setSizes(e.target.value)} value={sizes } className='w-full px-3 py-2 sm:w-[120px]' type="number" placeholder='100 กรัม' />
+                <input onChange={(e)=> setSizes(e.target.value)} value={sizes} className='w-full px-3 py-2 sm:w-[120px]' type="text" placeholder='100, 170' />
               </div>
             </div>
           </div>

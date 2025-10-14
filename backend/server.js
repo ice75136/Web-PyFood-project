@@ -9,10 +9,15 @@ import cartRouter from './routes/cartRoute.js'
 import orderRouter from './routes/orderRoute.js'
 import './config/db.js'
 import addressRouter from './routes/addressRoute.js'
+import db from './models/index.js'
 
 // App Config
 const app = express()
 const port = process.env.PORT || 4000
+
+db.sequelize.sync().then(() => {
+    console.log('✅ Database & tables synced!');
+});
 // connectDB() เอาออก
 // connectCloudinary() เอาออก
 

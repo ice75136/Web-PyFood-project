@@ -1,5 +1,4 @@
 import { v2 as cloudinary } from "cloudinary"
-import productModel from "../models/productModel.js"
 import db from '../models/index.js';
 
 
@@ -45,21 +44,23 @@ const addProduct = async (req, res) => {
 // function for list product
 const listProducts = async (req, res) => {
     try {
-
-        const products = await db.Product.findAll();
+        const products = await db.Product.findAll({
+            include: [
+                { model: db.Category },
+                { model: db.ProductType }
+            ]
+        });
         res.status(200).json(products);
-
     } catch (error) {
-        console.error('Error fetching products:', error);
-        res.status(500).json({ message: 'Error fetching products' });
+        console.error("Error fetching products:", error);
+        res.status(500).json({ message: "Error fetching products" });
     }
-
-}
+};
 
 // function for removing product
 const removeProduct = async (req, res) => {
     try {
-
+        console.log('Backend ได้รับคำขอลบ:', req.body);
         const { id } = req.body;
 
         const product = await db.Product.findByPk(id);
@@ -96,7 +97,7 @@ const singleProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
     try {
 
-        const { id, name, description, price, stock_quantity, category_id, product_type_id } = req.body;
+        const { id, name, description, price, stock_quantity, category_id, product_type_id, sizes, bestseller } = req.body;
 
         const product = await db.Product.findByPk(id);
 
@@ -124,6 +125,12 @@ const updateProduct = async (req, res) => {
         product.stock_quantity = stock_quantity || product.stock_quantity;
         product.category_id = category_id || product.category_id;
         product.product_type_id = product_type_id || product.product_type_id;
+        product.bestseller = bestseller || product.bestseller;
+
+        if (sizes) {
+            product.sizes = JSON.parse(sizes);
+        }
+
         product.image_url = mainImageUrl;
         product.images = imageUrls;
 
