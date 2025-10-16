@@ -5,26 +5,43 @@ import db from '../models/index.js';
 // add products to user cart
 const addToCart = async (req, res) => {
     try {
+        const userId = req.user.id;
+        const { itemId } = req.body;
 
-        const userId = req.user.id; // ดึง id ของ user จาก token ที่ middleware ถอดรหัสให้
-        const { itemId } = req.body; // id ของสินค้าที่จะเพิ่ม
-
+        // 1. ค้นหา user
         const user = await db.User.findByPk(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // 2. อัปเดตข้อมูลตะกร้าในโค้ด
         let cartData = user.cartData || {};
-
         cartData[itemId] = (cartData[itemId] || 0) + 1;
-
         user.cartData = cartData;
-        user.changed('cartData', true); // บอก Sequelize ว่า JSON field นี้มีการเปลี่ยนแปลง
-        await user.save();
+        user.changed('cartData', true);
 
-        res.status(200).json({ message: "Item added to cart", cartData });
-        
+        // 3. สั่งบันทึก
+        await user.save();
+        console.log('--- คำสั่ง user.save() ทำงานจบแล้ว ---');
+
+        // 4. [ขั้นตอนใหม่] อ่านข้อมูลจากฐานข้อมูลกลับมาตรวจสอบทันที
+        const userAfterSave = await db.User.findByPk(userId);
+        console.log('ข้อมูลตะกร้าในฐานข้อมูลจริงๆ หลังบันทึก:', userAfterSave.cartData);
+
+        // 5. เปรียบเทียบข้อมูลเพื่อยืนยัน
+        if (JSON.stringify(userAfterSave.cartData) === JSON.stringify(cartData)) {
+            console.log('✅ การตรวจสอบสำเร็จ: ข้อมูลในฐานข้อมูลตรงกับที่คาดหวัง!');
+            res.status(200).json({ message: "Item added to cart", cartData });
+        } else {
+            console.error('❌ การตรวจสอบล้มเหลว: ข้อมูลในฐานข้อมูลไม่ตรงกับที่บันทึก!');
+            res.status(500).json({ message: "Failed to verify cart update" });
+        }
+
     } catch (error) {
-        console.error("Error adding to cart: ", error);
+        console.error("!!! เกิดข้อผิดพลาดใน addToCart: ", error);
         res.status(500).json({ message: "Error adding to cart" });
     }
-}
+};
 
 // update user cart
 const updateCart = async (req, res) => {

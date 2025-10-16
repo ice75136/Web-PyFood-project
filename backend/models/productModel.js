@@ -39,11 +39,12 @@ const Product = sequelize.define('Product', {
         type: DataTypes.BOOLEAN,
         defaultValue: false
     },
-    category_id: {
-        type: DataTypes.INTEGER
-    },
     product_type_id: {
         type: DataTypes.INTEGER
+    },
+    is_active: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true
     }
 }, {
     tableName: 'products',

@@ -3,80 +3,103 @@ import { ShopContext } from '../context/ShopContext'
 import Title from '../components/Title';
 import { assets } from '../assets/assets';
 import CartTotal from '../components/CartTotal';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Cart = () => {
 
-  const { products, currency, cartItems, updateQuantity , navigate } = useContext(ShopContext);
+  const { products, currency, cartItems, addToCart, removeFromCart, getCartAmount, navigate } = useContext(ShopContext);
 
-  const [cartData,setCartData] = useState([]);
+  const [cartData, setCartData] = useState([]);
 
-  useEffect(()=>{
+  useEffect(() => {
+    if (products.length > 0 && Object.keys(cartItems).length > 0) {
 
-    if (products.length > 0) {
-      const tempData = [];
-      for(const items in cartItems){
-        for(const item in cartItems[items]){
-          if (cartItems[items][item] > 0) {
-            tempData.push({
-              _id: items,
-              size:item,
-              quantity:cartItems[items][item]
-            })
-          }
+      // แปลง cartItems object ให้เป็น Array ที่มีข้อมูลสินค้าครบถ้วน
+      const data = Object.keys(cartItems).map((itemId) => {
+        // ค้นหาสินค้าจาก products array โดยใช้ itemId
+        const itemInfo = products.find((product) => product.id == itemId);
+        if (itemInfo) {
+          return {
+            ...itemInfo, // ข้อมูลสินค้าทั้งหมด (id, name, price, image_url, etc.)
+            quantity: cartItems[itemId] // เพิ่มจำนวนสินค้าในตะกร้าเข้าไป
+          };
         }
-      }
-      setCartData(tempData);
-    }
+        return null;
+      }).filter(item => item !== null); // กรองสินค้าที่อาจหาไม่เจอทิ้งไป
 
-  },[cartItems,products])
+      setCartData(data);
+    } else {
+      setCartData([]); // ถ้าตะกร้าว่าง ให้เคลียร์ข้อมูล
+    }
+  }, [cartItems, products]); // ให้ useEffect ทำงานเมื่อ cartItems หรือ products เปลี่ยนแปลง
 
   return (
-    <div className='border-t pt-14'>
-
+    <div className='border-t pt-14 min-h-[80vh]'>
       <div className='text-2xl mb-3'>
-        <Title text2={'ตะกร้าสินค้า'}/>
+        <Title text2={'ตะกร้าสินค้า'} />
       </div>
 
-      <div>
-        {
-          cartData.map((item,index)=>{
+      {/* 3. ส่วนแสดงผลสินค้าในตะกร้า */}
+      <div className='my-8'>
+        {cartData.length > 0 ? (
+          <>
+            {/* Header ของตาราง */}
+            <div className='hidden sm:grid grid-cols-[3fr_1fr_1fr_1fr_0.5fr] text-center gap-4 py-3 border-b text-gray-600'>
+              <p className='text-left'>สินค้า</p>
+              <p>ราคา</p>
+              <p>จำนวน</p>
+              <p>รวม</p>
+              <p>ลบ</p>
+            </div>
 
-            const productData = products.find((product)=> product._id === item._id);
-
-            return (
-              <div key={index} className='py-4 border-t border-b border-gray-300 text-gray-700 grid grid-cols-[4fr_0.5fr_0.5fr] sm:grid-cols-[4fr_2fr_0.5fr_0.5fr_0.5fr] text-center gap-4'>
-                <div className=' flex items-start gap-6'>
-                  <img className='w-16 sm:w-20' src={productData.image[0]} alt="" />
+            {cartData.map((item) => (
+              <div key={item.id} className='py-4 border-b border-gray-300 text-gray-700 grid grid-cols-[3fr_1fr_1fr] sm:grid-cols-[3fr_1fr_1fr_1fr_0.5fr] items-center text-center gap-4'>
+                {/* ข้อมูลสินค้า */}
+                <Link to={`/product/${item.id}`} className='flex items-center gap-4 text-left'>
+                  <img className='w-16 sm:w-20' src={item.image_url} alt={item.name} />
                   <div>
-                    <p className='text-xs sm:text-lg font-medium'>{productData.name}</p>
+                    <p className='text-xs sm:text-base font-medium'>{item.name}</p>
                   </div>
-                    
-                </div>
-                <input onChange={(e)=> e.target.value === '' || e.target.value === '0' ? null : updateQuantity(item._id,item.size,Number(e.target.value))} className='border border-gray-300 max-w-10 max-h-10 sm:max-w-20 m-5 px-1 sm:px-2 py-1' type="number" min={1} defaultValue={item.quantity} />
-                <div className='flex gap-5 mt-2'>
-                        <p className='max-w-10 max-h-10 sm:max-w-20 m-5 px-1 sm:px-2 py-1'>{currency}{productData.price}.00</p>
-                        <p className='max-w-10 max-h-10 sm:max-w-20 m-5 px-1 sm:px-2 py-1'>{currency}{productData.price * item.quantity}.00</p>
-                        {/* <p className='px-2 sm:px-3 sm:py-1 border bg-slate-50'>{item.size}</p> */}
-                    </div>
-                <img onClick={()=>updateQuantity(item._id,item.size,0)} className='w-4 mr-4 sm:w-5  m-8 cursor-pointer' src={assets.bin_icon} alt="" />
-              </div>
-            )
+                </Link>
 
-          })
-        }
+                {/* ราคาต่อชิ้น */}
+                <p>{currency}{item.price}</p>
+
+                {/* จำนวน */}
+                <div className='flex justify-center items-center gap-2'>
+                  <button onClick={() => removeFromCart(item.id)} className='w-6 h-6 bg-gray-200 rounded-full'>-</button>
+                  <p className='w-8'>{item.quantity}</p>
+                  <button onClick={() => addToCart(item.id)} className='w-6 h-6 bg-gray-200 rounded-full'>+</button>
+                </div>
+
+                {/* ราคารวม */}
+                <p>{currency}{item.price * item.quantity}</p>
+
+                {/* ปุ่มลบ */}
+                <img onClick={() => removeFromCart(item.id)} className='w-4 mx-auto cursor-pointer' src={assets.bin_icon} alt="remove" />
+              </div>
+            ))}
+          </>
+        ) : (
+          <div className='text-center py-20'>
+            <p>ตะกร้าสินค้าของคุณว่างเปล่า</p>
+            <Link to='/' className='text-blue-600 hover:underline mt-2 inline-block'>กลับไปเลือกซื้อสินค้า</Link>
+          </div>
+        )}
       </div>
-        
+
+      {/* ส่วนสรุปยอด */}
+      {cartData.length > 0 && (
         <div className='flex justify-end my-20'>
           <div className='w-full sm:w-[450px]'>
             <CartTotal />
-            <div className=' w-full text-end'>
-              <button onClick={()=>navigate('/place-order')} className='bg-black text-white text-sm my-8 px-3 py-3'>ดำเนินการชำระเงิน</button>
+            <div className='w-full text-end'>
+              <button onClick={() => navigate('/place-order')} className='bg-black text-white text-sm my-8 px-3 py-3'>ดำเนินการชำระเงิน</button>
             </div>
           </div>
         </div>
-
+      )}
     </div>
   )
 }
-
 export default Cart

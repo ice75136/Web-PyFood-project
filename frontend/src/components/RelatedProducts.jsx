@@ -3,25 +3,34 @@ import { ShopContext } from '../context/ShopContext'
 import Title from './Title';
 import ProductItem from './ProductItem';
 
-const RelatedProducts = ({category,subCategory}) => {
+const RelatedProducts = ({ categories, productType, currentProductId }) => {
 
     const { products } = useContext(ShopContext);
     const [related,setRelated] = useState([]);
 
     useEffect(()=>{
 
-        if(products.length > 0) {
+        if(products.length > 0 && categories && categories.length > 0) {
 
-            let productsCopy = products.slice();
+            const currentCategoryIds = categories.map(cat => cat.id);
 
-            productsCopy = productsCopy.filter((item)=> category === item.category);
-            productsCopy = productsCopy.filter((item)=> subCategory === item.subCategory);
+            const filteredProducts = products.filter((item) => {
+                // เงื่อนไข 1: ต้องไม่ใช่สินค้าชิ้นปัจจุบัน
+                const isNotCurrentProduct = item.id !== currentProductId;
+                
+                // เงื่อนไข 2: ต้องมีหมวดหมู่อย่างน้อยหนึ่งอันตรงกัน
+                const hasMatchingCategory = item.Categories && item.Categories.some(cat => currentCategoryIds.includes(cat.id));
+                
+                return isNotCurrentProduct && hasMatchingCategory;
+            });
             
-            setRelated(productsCopy.slice(0,5));
-            
+            setRelated(filteredProducts.slice(0, 5));
         }
+    }, [products, categories, currentProductId]);
 
-    },[products])
+    if (related.length === 0) {
+        return null;
+    }
 
   return (
     <div className='my-24'>
@@ -29,8 +38,14 @@ const RelatedProducts = ({category,subCategory}) => {
             <Title text1={'RELATED'} text2={'PRODUCTS'} />
         </div>
         <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 gap-y-6'>
-            {related.map((item,index)=>(
-                <ProductItem key={index} id={item._id} name={item.name} price={item.price} image={item.image}/>
+            {related.map((item)=>(
+                <ProductItem 
+                    key={item.id} 
+                    id={item.id} 
+                    name={item.name} 
+                    price={item.price} 
+                    image={item.image_url}
+            />
             ))}
         </div>
     </div>
