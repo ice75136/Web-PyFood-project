@@ -15,6 +15,10 @@ const Order = sequelize.define('Order', {
         type: DataTypes.STRING,
         defaultValue: 'pending' // สถานะเริ่มต้นคือ 'รอการชำระเงิน'
     },
+    payment_method: { // <-- เพิ่มส่วนนี้
+        type: DataTypes.STRING,
+        allowNull: true
+    },
     payment_slip_url: { 
         type: DataTypes.STRING,
         allowNull: true

@@ -12,60 +12,82 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 // Placing orders using COD Method
 const placeOrder = async (req, res) => {
+    const t = await db.sequelize.transaction();
+
     try {
         const userId = req.user.id;
+        const { user_address_id, payment_method } = req.body;
 
-        // รับที่อยู่ที่จะให้จัดส่งจาก frontend
-        const { user_address_id } = req.body;
         if (!user_address_id) {
+            await t.rollback();
             return res.status(400).json({ message: "Shipping address is required" });
         }
+        if (!payment_method) {
+            await t.rollback();
+            return res.status(400).json({ message: "Payment method is required" });
+        }
 
-        // ค้นหา user และข้อมูลตะกร้า
         const user = await db.User.findByPk(userId);
         const cartData = user.cartData || {};
         const itemIds = Object.keys(cartData);
 
         if (itemIds.length === 0) {
+            await t.rollback();
             return res.status(400).json({ message: "Cart is empty" });
         }
 
-        // --- คำนวณยอดรวม (สำคัญ: ต้องดึงราคาล่าสุดจากฐานข้อมูลเสมอ) ---
         let totalAmount = 0;
         const productsInCart = await db.Product.findAll({ where: { id: itemIds } });
 
+        if(productsInCart.length !== itemIds.length){
+             await t.rollback();
+             return res.status(400).json({ message: "สินค้าบางรายการในตะกร้าของคุณไม่มีจำหน่ายแล้ว" });
+        }
+
         for (const product of productsInCart) {
             const quantity = cartData[product.id];
+            if(!quantity || quantity <= 0){
+                 await t.rollback();
+                 return res.status(400).json({ message: `จำนวนสินค้า ${product.name} ไม่ถูกต้อง` });
+            }
             totalAmount += product.price * quantity;
         }
-        // ----------------------------------------------------------------
 
-        // 1. สร้าง Order (หัวบิล)
+        // --- ส่วนที่แก้ไข: กำหนดสถานะเริ่มต้นตาม payment_method ---
+        let initialOrderStatus;
+        if (payment_method === 'cod') {
+            initialOrderStatus = 'Processing'; // ถ้าเป็น COD ให้เริ่มที่ "กำลังเตรียมจัดส่ง"
+        } else {
+            initialOrderStatus = 'pending'; // ถ้าเป็นวิธีอื่น ให้เริ่มที่ "รอชำระเงิน"
+        }
+
         const newOrder = await db.Order.create({
             user_id: userId,
             user_address_id: user_address_id,
             total_amount: totalAmount,
-            order_status: 'pending' // สถานะเริ่มต้น
-        });
+            order_status: initialOrderStatus, // <-- ใช้สถานะเริ่มต้นที่กำหนดไว้
+            payment_method: payment_method
+        }, { transaction: t });
 
-        // 2. สร้าง Order Items (รายการสินค้าในบิล)
         const orderItemsData = productsInCart.map(product => ({
             order_id: newOrder.id,
             product_id: product.id,
             quantity: cartData[product.id],
             price_per_unit: product.price
         }));
-        await db.OrderItem.bulkCreate(orderItemsData);
+        await db.OrderItem.bulkCreate(orderItemsData, { transaction: t });
 
-        // 3. ล้างตะกร้าสินค้า
         user.cartData = {};
         user.changed('cartData', true);
-        await user.save();
+        await user.save({ transaction: t });
+
+        await t.commit();
 
         res.status(201).json({ message: "Order placed successfully", orderId: newOrder.id });
 
     } catch (error) {
-        console.error("Error placing order:", error);
+        await t.rollback();
+        console.error("Error placing order, transaction rolled back:", error);
         res.status(500).json({ message: "Error placing order" });
     }
 };
@@ -81,21 +103,20 @@ const uploadPaymentSlip = async (req, res) => {
             return res.status(400).json({ message: "กรุณาแนบไฟล์สลิป" });
         }
 
-        // ค้นหาออเดอร์ และตรวจสอบว่าเป็นของ user คนนี้จริงหรือไม่
         const order = await db.Order.findOne({ where: { id: orderId, user_id: userId } });
 
         if (!order) {
-            return res.status(404).json({ message: "ไม่พบคำสั่งซื้อ หรือคุณไม่มีสิทธิ์เข้าถึง" });
+            return res.status(404).json({ message: "ไม่พบคำสั่งซื้อ" });
         }
         
-        // ไม่อนุญาตให้อัปโหลดซ้ำถ้าสถานะไม่ใช่ pending
-        if (order.order_status !== 'pending') {
-            return res.status(400).json({ message: "ไม่สามารถแจ้งชำระเงินสำหรับคำสั่งซื้อนี้ได้" });
+        // --- ส่วนที่แก้ไข ---
+        // อนุญาตถ้าสถานะเป็น 'pending' หรือ 'payment_rejected'
+        if (order.order_status !== 'pending' && order.order_status !== 'payment_rejected') {
+            return res.status(400).json({ message: "ไม่สามารถแจ้งชำระเงินสำหรับคำสั่งซื้อสถานะนี้ได้" });
         }
 
-        // อัปเดต URL ของสลิป และเปลี่ยนสถานะ
         order.payment_slip_url = slipUrl;
-        order.order_status = 'awaiting_verification'; // สถานะใหม่: รอการตรวจสอบ
+        order.order_status = 'awaiting_verification'; // เปลี่ยนเป็นรอตรวจสอบเสมอ
         await order.save();
 
         res.status(200).json({ message: "อัปโหลดสลิปสำเร็จ! รอการตรวจสอบจากทางร้าน", order });

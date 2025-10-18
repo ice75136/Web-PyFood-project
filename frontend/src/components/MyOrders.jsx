@@ -3,6 +3,7 @@ import { ShopContext } from '../context/ShopContext';
 import axios from 'axios';
 import UploadSlipModal from './UploadSlipModal'; // Import Component Modal
 import { toast } from 'react-toastify';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 // Object สำหรับแปลสถานะเป็นภาษาไทย
 const statusThai = {
@@ -34,7 +35,19 @@ const MyOrders = () => {
     const { backendUrl, token, currency } = useContext(ShopContext);
     const [allOrders, setAllOrders] = useState([]);
     const [filteredOrders, setFilteredOrders] = useState([]);
-    const [activeTab, setActiveTab] = useState('all');
+    const location = useLocation(); // <-- ดึงข้อมูล location ปัจจุบัน
+    const navigate = useNavigate();
+
+    const [activeTab, setActiveTab] = useState(() => {
+        // ตรวจสอบว่ามี state 'fromPlaceOrder' ส่งมาหรือไม่
+        if (location.state?.fromPlaceOrder) {
+            return 'to_pay'; // ถ้าใช่ ให้เริ่มที่แท็บ 'ที่ต้องชำระ'
+        }
+        // ถ้าไม่ใช่ ให้ใช้ค่าจาก localStorage หรือ 'all' เหมือนเดิม
+        const savedTab = localStorage.getItem('lastOrderTab');
+        return savedTab || 'all';
+    });
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
 
@@ -56,14 +69,24 @@ const MyOrders = () => {
     };
 
     useEffect(() => {
+        // เมื่อ Component โหลด ให้ดึงข้อมูล และบันทึก activeTab ปัจจุบัน
         fetchOrders();
-    }, [token]);
+        localStorage.setItem('lastOrderTab', activeTab); 
+    }, [token]); // ยังคงทำงานเมื่อ token เปลี่ยน
+
+    useEffect(() => {
+        // ถ้ามี state 'fromPlaceOrder' อยู่ ให้เคลียร์ทิ้งไป
+        // เพื่อที่ว่าเมื่อผู้ใช้รีเฟรชหน้า จะได้ไม่กลับมาที่แท็บ 'to_pay' อีก
+        if (location.state?.fromPlaceOrder) {
+            navigate(location.pathname, { replace: true, state: {} });
+        }
+    }, [location, navigate]);
 
     // กรองข้อมูลเมื่อผู้ใช้คลิกแท็บ
     useEffect(() => {
         switch (activeTab) {
             case 'to_pay':
-                setFilteredOrders(allOrders.filter(order => 
+                setFilteredOrders(allOrders.filter(order =>
                     order.order_status === 'pending' || order.order_status === 'payment_rejected'
                 ));
                 break;
@@ -86,6 +109,7 @@ const MyOrders = () => {
                 setFilteredOrders(allOrders);
                 break;
         }
+        localStorage.setItem('lastOrderTab', activeTab);
     }, [activeTab, allOrders]);
 
     // ฟังก์ชันสำหรับเปิด Modal
@@ -155,7 +179,7 @@ const MyOrders = () => {
                 {tabs.map(tab => (
                     <button
                         key={tab.key}
-                        onClick={() => setActiveTab(tab.key)}
+                        onClick={() => {setActiveTab(tab.key);fetchOrders();}}
                         className={`py-3 px-4 text-sm flex-shrink-0 transition-colors ${activeTab === tab.key ? 'border-b-2 border-blue-600 text-blue-600 font-semibold' : 'text-gray-600 hover:bg-gray-100'}`}
                     >
                         {tab.label}

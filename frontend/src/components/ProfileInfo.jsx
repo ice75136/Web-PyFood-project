@@ -1,10 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { ShopContext } from '../context/ShopContext';
 import axios from 'axios';
+import ChangePasswordModal from './ChangePasswordModal';
 
 const ProfileInfo = () => {
     const { backendUrl, token } = useContext(ShopContext);
     const [user, setUser] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -28,6 +30,7 @@ const ProfileInfo = () => {
 
     return (
         <div className='flex flex-col gap-4'>
+            {isModalOpen && <ChangePasswordModal onClose={() => setIsModalOpen(false)} />}
             <h2 className='text-2xl font-semibold'>ข้อมูลโปรไฟล์</h2>
             <div className='p-4 border rounded-lg bg-gray-50'>
                 <div className='mb-3'>
@@ -39,7 +42,7 @@ const ProfileInfo = () => {
                     <p className='text-lg'>{user.email}</p>
                 </div>
             </div>
-            <button className='mt-4 w-fit px-4 py-2 bg-gray-200 text-sm rounded-md hover:bg-gray-300'>
+            <button onClick={() => setIsModalOpen(true)} className='mt-4 w-fit px-4 py-2 bg-gray-200 text-sm rounded-md hover:bg-gray-300'>
                 เปลี่ยนรหัสผ่าน
             </button>
         </div>

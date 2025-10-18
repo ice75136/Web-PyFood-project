@@ -95,6 +95,31 @@ const ShopContextProvider = (props) => {
         }
     }
 
+    // --- ฟังก์ชันใหม่สำหรับลบทั้งหมด ---
+    const removeItemCompletely = async (itemId) => {
+        // อัปเดต State ทันที
+        setCartItems((prev) => {
+            const newCart = { ...prev };
+            delete newCart[itemId]; // ลบ key ออกจาก state
+            return newCart;
+        });
+
+        if (token) {
+            try {
+                await axios.post(
+                    backendUrl + '/api/cart/remove-item', // เรียก API ใหม่
+                    { itemId },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                // ไม่ต้องทำอะไรเพิ่ม เพราะ State อัปเดตไปแล้ว
+            } catch (error) {
+                console.log(error);
+                toast.error("เกิดข้อผิดพลาดในการลบสินค้า");
+                // (Optional) อาจจะต้องมี Logic กู้คืน State ถ้า API ล้มเหลว
+            }
+        }
+    }
+
     // --- 4. แก้ไข: ฟังก์ชันคำนวณยอดรวมในตะกร้า ---
     const getCartAmount = () => {
         let totalAmount = 0;
@@ -148,7 +173,7 @@ const ShopContextProvider = (props) => {
     const value = {
         products, currency, delivery_fee,
         search, setSearch, showSearch, setShowSearch,
-        cartItems, addToCart, removeFromCart, setCartItems, // <-- เพิ่ม removeFromCart
+        cartItems, addToCart, removeFromCart, removeItemCompletely, setCartItems, 
         getCartCount,
         getCartAmount, navigate, backendUrl,
         setToken, token

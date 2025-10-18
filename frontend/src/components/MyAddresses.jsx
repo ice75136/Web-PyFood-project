@@ -181,6 +181,18 @@ const MyAddresses = () => {
         }
     };
 
+    const handleSetDefault = async (addressId) => {
+        try {
+            await axios.post(`${backendUrl}/api/address/set-default`, { addressId }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            toast.success("ตั้งค่าที่อยู่หลักสำเร็จ");
+            fetchAddresses(); // โหลดข้อมูลใหม่เพื่ออัปเดต UI
+        } catch (error) {
+            toast.error("เกิดข้อผิดพลาด");
+        }
+    };
+
     return (
         <div className='flex flex-col gap-5'>
             {/* แสดง Modal เพิ่ม/แก้ไข ตามเงื่อนไข */}
@@ -209,6 +221,9 @@ const MyAddresses = () => {
                             <div className='flex justify-between items-start'>
                                 <div>
                                     <p className='font-semibold'>{address.first_name} {address.last_name}</p>
+                                    {address.is_default && (
+                                            <span className='px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full'>ที่อยู่หลัก</span>
+                                        )}
                                     <p className='text-sm text-gray-600 mt-1'>{address.phone}</p>
                                     <p className='text-sm text-gray-600 mt-2'>
                                         {address.house_number}, {address.road ? `ถ.${address.road},` : ''} {address.alley ? `ซ.${address.alley},` : ''} แขวง/ตำบล {address.sub_district}, เขต/อำเภอ {address.district}, {address.province} {address.postal_code}
@@ -219,6 +234,16 @@ const MyAddresses = () => {
                                     <p onClick={() => handleDeleteAddress(address.id)} className='cursor-pointer text-red-600 hover:underline'>ลบ</p>
                                 </div>
                             </div>
+                            {!address.is_default && (
+                                <div className='mt-3 pt-3 border-t text-right'>
+                                    <button 
+                                        onClick={() => handleSetDefault(address.id)}
+                                        className='px-3 py-1 border border-gray-400 text-xs rounded hover:bg-gray-100'
+                                    >
+                                        ตั้งเป็นค่าเริ่มต้น
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     ))
                 ) : (

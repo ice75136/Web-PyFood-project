@@ -135,4 +135,36 @@ const removeCart = async (req, res) => {
     }
 }
 
-export { addToCart, updateCart, getUserCart, removeCart }
+const removeCartItem = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { itemId } = req.body;
+
+        const user = await db.User.findByPk(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        let cartData = user.cartData || {};
+
+        // ตรวจสอบว่ามีสินค้านี้อยู่หรือไม่ แล้วลบ key นั้นทิ้งไปเลย
+        if (cartData[itemId]) {
+            delete cartData[itemId]; // ลบ key ออกจาก object
+        } else {
+            // ถ้าไม่มีอยู่แล้ว ก็ไม่ต้องทำอะไร (อาจจะแจ้งเตือนหรือไม่ก็ได้)
+            return res.status(404).json({ message: "Item not found in cart" });
+        }
+
+        user.cartData = cartData;
+        user.changed('cartData', true);
+        await user.save();
+
+        res.status(200).json({ message: "Item completely removed from cart", cartData });
+
+    } catch (error) {
+        console.error("Error removing cart item:", error);
+        res.status(500).json({ message: "Error removing item from cart" });
+    }
+}
+
+export { addToCart, updateCart, getUserCart, removeCart, removeCartItem }

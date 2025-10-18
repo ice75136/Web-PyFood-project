@@ -6,13 +6,13 @@ import axios from 'axios'
 import { toast } from 'react-toastify'
 
 const PlaceOrder = () => {
-    const { navigate, backendUrl, token, getCartAmount, delivery_fee } = useContext(ShopContext);
+    const { navigate, backendUrl, token, getCartAmount, delivery_fee, setCartItems } = useContext(ShopContext);
 
     const [userAddresses, setUserAddresses] = useState([]);
     const [selectedAddressId, setSelectedAddressId] = useState('');
 
     // --- 1. เพิ่ม State สำหรับเก็บวิธีการชำระเงินที่เลือก ---
-    const [paymentMethod, setPaymentMethod] = useState('card'); // 'cod' = Cash on Delivery
+    const [paymentMethod, setPaymentMethod] = useState('bank_transfer'); // 'cod' = Cash on Delivery
 
     const fetchAddresses = async () => {
         if (token) {
@@ -46,15 +46,26 @@ const PlaceOrder = () => {
                 toast.error("กรุณาเลือกที่อยู่สำหรับจัดส่ง");
                 return;
             }
-            const orderData = { user_address_id: selectedAddressId };
+            const orderData = { 
+                user_address_id: selectedAddressId,
+                payment_method: paymentMethod 
+            };
             const response = await axios.post(
                 backendUrl + '/api/order/place',
                 orderData,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             if (response.status === 201) {
-                navigate('/myorders');
-                toast.success("สั่งซื้อสำเร็จ!");
+                setCartItems({});
+                if (paymentMethod === 'cod') {
+                    localStorage.removeItem('lastOrderTab');
+                    navigate('/profile/orders');
+                    toast.success("สั่งซื้อสำเร็จ!");
+                } else {
+                    // ถ้าเป็นวิธีอื่น พาไปหน้า /myorders พร้อม state (จะเปิดแท็บ 'to_pay')
+                    navigate('/profile/orders', { state: { fromPlaceOrder: true } });
+                    toast.success("สั่งซื้อสำเร็จ! กรุณาแจ้งชำระเงิน");
+                }
             } else {
                 toast.error("เกิดข้อผิดพลาดในการสั่งซื้อ");
             }
@@ -113,11 +124,11 @@ const PlaceOrder = () => {
 
                         {/* ปุ่มชำระผ่านบัตร */}
                         <div
-                            onClick={() => setPaymentMethod('card')}
-                            className={`flex items-center gap-3 border p-3 rounded-lg cursor-pointer transition-all ${paymentMethod === 'card' ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-300'}`}
+                            onClick={() => setPaymentMethod('bank_transfer')}
+                            className={`flex items-center gap-3 border p-3 rounded-lg cursor-pointer transition-all ${paymentMethod === 'bank_transfer' ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-300'}`}
                         >
-                            <div className={`w-5 h-5 border-2 rounded-full flex items-center justify-center ${paymentMethod === 'card' ? 'border-blue-500' : 'border-gray-400'}`}>
-                                {paymentMethod === 'card' && <div className='w-2.5 h-2.5 bg-blue-500 rounded-full'></div>}
+                            <div className={`w-5 h-5 border-2 rounded-full flex items-center justify-center ${paymentMethod === 'bank_transfer' ? 'border-blue-500' : 'border-gray-400'}`}>
+                                {paymentMethod === 'bank_transfer' && <div className='w-2.5 h-2.5 bg-blue-500 rounded-full'></div>}
                             </div>
                             <p className='text-gray-700 font-medium'>โอนเงินเข้าธนาคาร</p>
                         </div>

@@ -43,6 +43,50 @@ const getMyAddresses = async (req, res) => {
     }
 };
 
+const setDefaultAddress = async (req, res) => {
+    const userId = req.user.id;
+    const { addressId } = req.body;
+    
+    // ใช้ Transaction เพื่อความปลอดภัย
+    const t = await db.sequelize.transaction(); 
+
+    try {
+        // 1. ตั้งค่า is_default = false ให้กับที่อยู่อื่นๆ ทั้งหมดของ user คนนี้ก่อน
+        await db.UserAddress.update(
+            { is_default: false },
+            { 
+                where: { user_id: userId },
+                transaction: t 
+            }
+        );
+
+        // 2. ตั้งค่า is_default = true ให้กับที่อยู่ที่เลือก
+        const [updatedRows] = await db.UserAddress.update(
+            { is_default: true },
+            { 
+                where: { id: addressId, user_id: userId }, // ตรวจสอบว่าเป็นของ user คนนี้จริง
+                transaction: t 
+            }
+        );
+
+        // ตรวจสอบว่ามีการอัปเดตเกิดขึ้นจริงหรือไม่
+        if (updatedRows === 0) {
+            await t.rollback(); // ถ้าไม่มี ให้ยกเลิก
+            return res.status(404).json({ message: "Address not found or does not belong to user" });
+        }
+
+        // 3. ถ้าสำเร็จ ให้ Commit
+        await t.commit();
+        res.status(200).json({ message: "Default address set successfully" });
+
+    } catch (error) {
+        // 4. ถ้ามี Error ให้ Rollback
+        await t.rollback();
+        console.error("Error setting default address:", error);
+        res.status(500).json({ message: "Error setting default address" });
+    }
+};
+
 const updateAddress = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -84,4 +128,4 @@ const removeAddress = async (req, res) => {
     }
 };
 
-export { addAddress, getMyAddresses, updateAddress, removeAddress };
+export { addAddress, getMyAddresses, setDefaultAddress, updateAddress, removeAddress };

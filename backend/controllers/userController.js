@@ -115,5 +115,49 @@ const getProfile = async (req, res) => {
     }
 };
 
+const changePassword = async (req, res) => {
+    try {
+        const userId = req.user.id; // ดึง ID จาก token ของ auth middleware
+        const { currentPassword, newPassword } = req.body;
 
-export { loginUser, registerUser, adminLogin, getProfile } 
+        // ค้นหาผู้ใช้
+        const user = await db.User.findByPk(userId);
+        if (!user) {
+            return res.status(404).json({ message: "ไม่พบผู้ใช้" });
+        }
+
+        // ตรวจสอบว่ารหัสผ่านปัจจุบันถูกต้องหรือไม่
+        const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
+        if (!isMatch) {
+            return res.status(400).json({ message: "รหัสผ่านปัจจุบันไม่ถูกต้อง" });
+        }
+
+        // ตรวจสอบความถูกต้องของรหัสผ่านใหม่ (เช่น ความยาว)
+        if (!newPassword || newPassword.length < 8) {
+            return res.status(400).json({ message: "รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 8 ตัวอักษร" });
+        }
+
+        // Hash รหัสผ่านใหม่
+        // หมายเหตุ: Sequelize hook อาจจะไม่ทำงานตอน 'update' เราจึง hash เอง
+        const salt = await bcrypt.genSalt(10);
+        const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+
+        // อัปเดต password_hash ในฐานข้อมูล
+        await db.User.update(
+            { password_hash: hashedNewPassword },
+            { where: { id: userId } }
+        );
+
+        // หรืออีกวิธีคือ อัปเดต instance แล้ว save:
+        // user.password_hash = newPassword; // ถ้ามี hook beforeUpdate ที่ hash ให้
+        // await user.save(); // ต้องแน่ใจว่า hook ทำงานก่อนบันทึก
+
+        res.status(200).json({ message: "เปลี่ยนรหัสผ่านสำเร็จ" });
+
+    } catch (error) {
+        console.error("Error changing password:", error);
+        res.status(500).json({ message: "เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน" });
+    }
+};
+
+export { loginUser, registerUser, adminLogin, getProfile, changePassword } 

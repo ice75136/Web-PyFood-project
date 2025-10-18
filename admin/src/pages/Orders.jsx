@@ -23,7 +23,10 @@ const Orders = () => {
     const { token } = useAdmin();
     const [allOrders, setAllOrders] = useState([]);
     const [filteredOrders, setFilteredOrders] = useState([]);
-    const [activeTab, setActiveTab] = useState('all');
+    const [activeTab, setActiveTab] = useState(() => {
+        const savedTab = localStorage.getItem('adminLastOrderTab'); // ใช้ key เฉพาะสำหรับ admin
+        return savedTab || 'all';
+    });
     const [statusUpdates, setStatusUpdates] = useState({});
 
     const [slipImageUrl, setSlipImageUrl] = useState('');
@@ -37,7 +40,7 @@ const Orders = () => {
     const fetchAllOrders = async () => {
         if (token) {
             try {
-                // ใช้ URL ที่ถูกต้องคือ /api/order/list
+                console.log('Fetching orders...');
                 const response = await axios.get(backendUrl + '/api/order/orderlist', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
@@ -79,6 +82,7 @@ const Orders = () => {
                 setFilteredOrders(allOrders);
                 break;
         }
+        localStorage.setItem('adminLastOrderTab', activeTab);
     }, [activeTab, allOrders]);
 
     // --- 2. สร้างฟังก์ชันใหม่สำหรับจัดการ Dropdown และปุ่ม ---
@@ -117,11 +121,11 @@ const Orders = () => {
         { key: 'all', label: 'คำสั่งซื้อทั้งหมด' },
         { key: 'pending', label: 'รอชำระเงิน' },
         { key: 'awaiting_verification', label: 'รอตรวจสอบ' },
-        { key: 'payment_rejected', label: 'ชำระเงินไม่ผ่าน' },
         { key: 'to_ship', label: 'ที่ต้องจัดส่ง' },
         { key: 'shipped', label: 'กำลังจัดส่ง' },
         { key: 'completed', label: 'จัดส่งสำเร็จ' },
         { key: 'cancelled', label: 'ยกเลิก' },
+        { key: 'payment_rejected', label: 'ชำระเงินไม่ผ่าน' },
     ];
 
     return (
@@ -137,7 +141,7 @@ const Orders = () => {
                 {tabs.map(tab => (
                     <button
                         key={tab.key}
-                        onClick={() => setActiveTab(tab.key)}
+                        onClick={() => {setActiveTab(tab.key); fetchAllOrders();}}
                         className={`py-3 px-4 text-sm flex-shrink-0 transition-colors ${activeTab === tab.key ? 'border-b-2 border-blue-600 text-blue-600 font-semibold' : 'text-gray-600 hover:bg-gray-100'}`}
                     >
                         {tab.label}

@@ -7,7 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 const Cart = () => {
 
-  const { products, currency, cartItems, addToCart, removeFromCart, getCartAmount, navigate } = useContext(ShopContext);
+  const { products, currency, cartItems, addToCart, removeFromCart, removeItemCompletely, getCartAmount, navigate } = useContext(ShopContext);
 
   const [cartData, setCartData] = useState([]);
 
@@ -76,7 +76,7 @@ const Cart = () => {
                 <p>{currency}{item.price * item.quantity}</p>
 
                 {/* ปุ่มลบ */}
-                <img onClick={() => removeFromCart(item.id)} className='w-4 mx-auto cursor-pointer' src={assets.bin_icon} alt="remove" />
+                <img onClick={() => removeItemCompletely(item.id)} className='w-4 mx-auto cursor-pointer' src={assets.bin_icon} alt="remove" />
               </div>
             ))}
           </>
