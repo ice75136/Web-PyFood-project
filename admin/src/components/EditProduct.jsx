@@ -2,16 +2,17 @@ import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { backendUrl } from '../App'
 import { toast } from 'react-toastify'
-import { assets } from '../assets/assets'
+import { useAdmin } from '../context/AdminContext'
 
-const EditProduct = ({ open, onClose, product, token, fetchList }) => {
+
+const EditProduct = ({ open, onClose, product, fetchList }) => {
+    const { token } = useAdmin();
+
     const [image1, setImage1] = useState(null);
     const [image2, setImage2] = useState(null);
     const [image3, setImage3] = useState(null);
     const [image4, setImage4] = useState(null);
     const [oldImages, setOldImages] = useState([]);
-
-    // --- 1. แยก State ของ Categories ออกมาเป็น Array ---
     const [selectedCategories, setSelectedCategories] = useState([]);
 
     const [formData, setFormData] = useState({
@@ -21,6 +22,7 @@ const EditProduct = ({ open, onClose, product, token, fetchList }) => {
         product_type_id: "",
         price: "",
         sizes: "",
+        stock_quantity: "",
         bestseller: false,
     });
 
@@ -34,6 +36,7 @@ const EditProduct = ({ open, onClose, product, token, fetchList }) => {
                 product_type_id: product.product_type_id || "",
                 price: product.price || "",
                 sizes: product.sizes ? product.sizes.join(', ') : "",
+                stock_quantity: product.stock_quantity || "",
                 bestseller: product.bestseller || false,
             });
 
@@ -85,6 +88,8 @@ const EditProduct = ({ open, onClose, product, token, fetchList }) => {
             data.append("product_type_id", formData.product_type_id);
             data.append("price", formData.price);
             data.append("bestseller", formData.bestseller);
+
+            data.append("stock_quantity", formData.stock_quantity);
 
             const sizesArray = formData.sizes.split(',').map(s => s.trim()).filter(s => s);
             data.append("sizes", JSON.stringify(sizesArray));
@@ -185,6 +190,10 @@ const EditProduct = ({ open, onClose, product, token, fetchList }) => {
                         <div>
                             <p className='mb-2'>ราคาสินค้า</p>
                             <input className='w-full px-3 py-2 border rounded' name="price" value={formData.price} onChange={handleChange} type="number" placeholder='250' />
+                        </div>
+                        <div>
+                            <p className='mb-2'>จำนวนสต็อก</p>
+                            <input className='w-full px-3 py-2 border rounded' name="stock_quantity" value={formData.stock_quantity} onChange={handleChange} type="number" placeholder='50' />
                         </div>
                         <div>
                             <p className='mb-2'>ขนาด (กรัม) <span className='text-gray-500 text-xs'>(คั่นด้วยลูกน้ำ)</span></p>

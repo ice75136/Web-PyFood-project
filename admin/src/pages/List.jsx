@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { backendUrl } from '../App'
 import { toast } from 'react-toastify'
 import EditProduct from '../components/EditProduct'
+import { useAdmin } from '../context/AdminContext'
 
 // --- 1. สร้าง Component สำหรับ Pop-up ยืนยัน (วางไว้ข้างบนสุด) ---
 const ConfirmationDialog = ({ message, onConfirm, onCancel }) => {
@@ -20,8 +21,9 @@ const ConfirmationDialog = ({ message, onConfirm, onCancel }) => {
 };
 
 
-const List = ({ token }) => {
+const List = () => {
 
+  const { token } = useAdmin();
   const [list, setList] = useState([])
   const [openEdit, setOpenEdit] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -48,7 +50,7 @@ const List = ({ token }) => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (response.status === 200) {
-        toast.success("ซ่อนสินค้าสำเร็จ");
+        toast.success("ปิดการแสดงสินค้า");
         await fetchList();
       } else {
         toast.error("เกิดข้อผิดพลาด");
@@ -67,7 +69,7 @@ const List = ({ token }) => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (response.status === 200) {
-        toast.success("กู้คืนสินค้าสำเร็จ");
+        toast.success("เปิดการแสดงสินค้า");
         await fetchList();
       } else {
         toast.error("เกิดข้อผิดพลาดในการกู้คืน");
@@ -139,7 +141,10 @@ const List = ({ token }) => {
         {
           list.map((item) => (
             <div
-              className={`grid grid-cols-[1fr_3fr_1fr] md:grid-cols-[1fr_3fr_1fr_1fr_1fr_1fr_1fr] items-center gap-2 py-1 px-2 border border-gray-300 text-sm ${!item.is_active ? 'bg-gray-200 text-gray-500' : ''}`}
+              // ----- ส่วนที่แก้ไข: เพิ่มเงื่อนไขสำหรับสต็อกเป็น 0 -----
+              className={`grid grid-cols-[1fr_3fr_1fr] md:grid-cols-[1fr_3fr_1fr_1fr_1fr_1fr_1fr] items-center gap-2 py-1 px-2 border border-gray-300 text-sm 
+                ${!item.is_active ? 'bg-gray-200 text-gray-500' : (item.stock_quantity === 0 ? 'bg-red-50' : '')}
+              `}
               key={item.id}
             >
               <img className={`w-12 h-12 object-cover ${!item.is_active ? 'opacity-50' : ''}`} src={item.image_url} alt={item.name} />
@@ -147,18 +152,18 @@ const List = ({ token }) => {
               <p className='text-center'> {item.Categories && item.Categories.length > 0 ? item.Categories.map(cat => cat.name).join(', ') : 'ไม่มีหมวดหมู่'}</p>
               <p className='text-center'>{item.ProductType.name}</p>
               <p className='text-center'>{item.price}</p>
-              <p className='text-center'>{item.stock_quantity}</p>
+              <p className={`text-center font-semibold ${item.stock_quantity === 0 ? 'text-red-600' : ''}`}>{item.stock_quantity}</p>
 
               <div className='flex justify-center items-center gap-4'>
                 <p onClick={() => { setSelectedProduct(item); setOpenEdit(true); }} className='cursor-pointer text-lg text-amber-600'>แก้ไข</p>
 
                 {/* --- 5. แก้ไขส่วนแสดงผลปุ่ม --- */}
                 {item.is_active ? (
-                  <p onClick={() => removeProduct(item.id)} className='cursor-pointer text-lg text-red-600'>ปิด</p>
+                  <p onClick={() => removeProduct(item.id)} className='cursor-pointer text-lg text-blue-500'>ปิด</p>
                 ) : (
                   <>
                     <p onClick={() => restoreProduct(item.id)} className='cursor-pointer text-lg text-green-600'>เปิด</p>
-                    <p onClick={() => confirmHardDelete(item.id)} className='cursor-pointer text-xl text-gray-400 hover:text-red-700' title='ลบถาวร'>🗑️</p>
+                    <p onClick={() => confirmHardDelete(item.id)} className='cursor-pointer text-xl text-gray-400 text-red-700' title='ลบถาวร'>ลบ</p>
                   </>
                 )}
               </div>
@@ -167,7 +172,8 @@ const List = ({ token }) => {
         }
       </div>
 
-      <EditProduct open={openEdit} onClose={() => setOpenEdit(false)} product={selectedProduct} fetchList={fetchList} token={token} />
+      <EditProduct open={openEdit} onClose={() => setOpenEdit(false)} product={selectedProduct} fetchList={fetchList} />
+
     </>
   )
 }

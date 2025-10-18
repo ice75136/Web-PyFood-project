@@ -18,7 +18,8 @@ const Add = ({ token }) => {
     const [bestseller, setBestseller] = useState(false);
     const [sizes, setSizes] = useState("");
 
-    // --- 1. State สำหรับเก็บหมวดหมู่ที่เลือก (เป็น Array) ---
+    const [stockQuantity, setStockQuantity] = useState("");
+
     const [selectedCategories, setSelectedCategories] = useState([]);
 
     // --- 2. ฟังก์ชันสำหรับจัดการ Checkbox ---
@@ -42,6 +43,7 @@ const Add = ({ token }) => {
             formData.append("price", Number(price));
             formData.append("product_type_id", productTypeId);
             formData.append("bestseller", bestseller);
+            formData.append("stock_quantity", Number(stockQuantity));
 
             const sizesArray = sizes.split(',').map(s => s.trim()).filter(s => s);
             formData.append("sizes", JSON.stringify(sizesArray));
@@ -67,6 +69,7 @@ const Add = ({ token }) => {
                 setImage4(false);
                 setPrice('');
                 setSizes('');
+                setStockQuantity('');
                 setSelectedCategories([]); // <-- Reset state ของ categories ด้วย
             } else {
                 toast.error("เกิดข้อผิดพลาดในการเพิ่มสินค้า");
@@ -137,6 +140,10 @@ const Add = ({ token }) => {
                         <option value="5">ลัง</option>
                         <option value="6">ถุง</option>
                     </select>
+                </div>
+                <div>
+                    <p className='mb-2'>จำนวนสต็อก</p>
+                    <input onChange={(e) => setStockQuantity(e.target.value)} value={stockQuantity} className='w-full px-3 py-2 border rounded' type="number" placeholder='50' required/>
                 </div>
             </div>
 

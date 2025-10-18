@@ -10,9 +10,9 @@ const PlaceOrder = () => {
 
     const [userAddresses, setUserAddresses] = useState([]);
     const [selectedAddressId, setSelectedAddressId] = useState('');
-    
+
     // --- 1. เพิ่ม State สำหรับเก็บวิธีการชำระเงินที่เลือก ---
-    const [paymentMethod, setPaymentMethod] = useState('cod'); // 'cod' = Cash on Delivery
+    const [paymentMethod, setPaymentMethod] = useState('card'); // 'cod' = Cash on Delivery
 
     const fetchAddresses = async () => {
         if (token) {
@@ -92,7 +92,7 @@ const PlaceOrder = () => {
                 </div>
                 <button
                     type="button"
-                    onClick={() => navigate('/my-account/addresses')}
+                    onClick={() => navigate('/profile/addresses')}
                     className='mt-4 px-4 py-2 bg-gray-200 rounded-md text-sm hover:bg-gray-300'
                 >
                     จัดการที่อยู่ / เพิ่มที่อยู่ใหม่
@@ -110,16 +110,6 @@ const PlaceOrder = () => {
                 <div className='mt-12'>
                     <Title text2={'วิธีการชำระเงิน'} />
                     <div className='flex flex-col gap-3 mt-4'>
-                        {/* ปุ่มเก็บเงินปลายทาง */}
-                        <div
-                            onClick={() => setPaymentMethod('cod')}
-                            className={`flex items-center gap-3 border p-3 rounded-lg cursor-pointer transition-all ${paymentMethod === 'cod' ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-300'}`}
-                        >
-                            <div className={`w-5 h-5 border-2 rounded-full flex items-center justify-center ${paymentMethod === 'cod' ? 'border-blue-500' : 'border-gray-400'}`}>
-                                {paymentMethod === 'cod' && <div className='w-2.5 h-2.5 bg-blue-500 rounded-full'></div>}
-                            </div>
-                            <p className='text-gray-700 font-medium'>เก็บเงินปลายทาง (COD)</p>
-                        </div>
 
                         {/* ปุ่มชำระผ่านบัตร */}
                         <div
@@ -131,6 +121,19 @@ const PlaceOrder = () => {
                             </div>
                             <p className='text-gray-700 font-medium'>โอนเงินเข้าธนาคาร</p>
                         </div>
+
+                        {/* ปุ่มเก็บเงินปลายทาง */}
+                        <div
+                            onClick={() => setPaymentMethod('cod')}
+                            className={`flex items-center gap-3 border p-3 rounded-lg cursor-pointer transition-all ${paymentMethod === 'cod' ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-300'}`}
+                        >
+                            <div className={`w-5 h-5 border-2 rounded-full flex items-center justify-center ${paymentMethod === 'cod' ? 'border-blue-500' : 'border-gray-400'}`}>
+                                {paymentMethod === 'cod' && <div className='w-2.5 h-2.5 bg-blue-500 rounded-full'></div>}
+                            </div>
+                            <p className='text-gray-700 font-medium'>เก็บเงินปลายทาง</p>
+                        </div>
+
+                        
                     </div>
                 </div>
 

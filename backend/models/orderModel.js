@@ -15,6 +15,10 @@ const Order = sequelize.define('Order', {
         type: DataTypes.STRING,
         defaultValue: 'pending' // สถานะเริ่มต้นคือ 'รอการชำระเงิน'
     },
+    payment_slip_url: { 
+        type: DataTypes.STRING,
+        allowNull: true
+    },
     // Foreign Keys ที่จะเชื่อมกับตารางอื่น
     user_id: {
         type: DataTypes.INTEGER,

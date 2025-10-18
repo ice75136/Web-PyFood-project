@@ -178,7 +178,6 @@ const singleProduct = async (req, res) => {
     }
 }
 
-// function for update product 
 const updateProduct = async (req, res) => {
     try {
         const { id, name, description, price, stock_quantity, category_ids, product_type_id, sizes, bestseller } = req.body;
@@ -189,22 +188,44 @@ const updateProduct = async (req, res) => {
             return res.status(404).json({ message: "Product not found" });
         }
 
-        // <-- 5. แก้ไข: จัดการ Categories ด้วย setCategories
-        // Frontend ต้องส่ง category_ids เป็น JSON Array String เช่น '["1","3"]'
+        // --- จัดการ Categories ---
         if (category_ids) {
             const parsedCategoryIds = JSON.parse(category_ids);
             await product.setCategories(parsedCategoryIds);
         }
 
-        // ... (ส่วนจัดการรูปภาพเหมือนเดิม) ...
+        // --- จัดการรูปภาพ ---
+        const files = req.files;
+        let mainImageUrl = product.image_url;
+        let imageUrls = product.images || [];
+        if (files) {
+            if (files.image1) { imageUrls[0] = files.image1[0].path; mainImageUrl = files.image1[0].path; }
+            if (files.image2) imageUrls[1] = files.image2[0].path;
+            if (files.image3) imageUrls[2] = files.image3[0].path;
+            if (files.image4) imageUrls[3] = files.image4[0].path;
+        }
 
-        // อัปเดต field อื่นๆ
-        product.name = name || product.name;
-        product.description = description || product.description;
-        product.price = price || product.price;
-        // ... (update field อื่นๆ) ...
-        // ** ไม่ต้องมี product.category_ids = ... ที่นี่ **
-
+        // --- ส่วนที่แก้ไข: อัปเดต field อื่นๆ ด้วยวิธีที่ถูกต้อง ---
+        // เราจะเช็คว่ามีการส่งค่ามาหรือไม่ (แม้จะเป็น 0 หรือ false)
+        if (name !== undefined) product.name = name;
+        if (description !== undefined) product.description = description;
+        if (price !== undefined) product.price = price;
+        if (stock_quantity !== undefined) product.stock_quantity = stock_quantity;
+        if (product_type_id !== undefined) product.product_type_id = product_type_id;
+        
+        // สำหรับ bestseller ต้องเช็คเป็นพิเศษเพราะข้อมูลจาก form-data มาเป็น string
+        if (bestseller !== undefined) {
+            product.bestseller = (bestseller === 'true' || bestseller === true);
+        }
+        
+        // สำหรับ sizes และ images
+        if (sizes) {
+            product.sizes = JSON.parse(sizes);
+        }
+        product.image_url = mainImageUrl;
+        product.images = imageUrls;
+        
+        // สั่งบันทึกการเปลี่ยนแปลงทั้งหมด
         await product.save();
 
         res.status(200).json({ message: "Product updated successfully", product: product });

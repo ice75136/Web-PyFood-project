@@ -70,6 +70,72 @@ const placeOrder = async (req, res) => {
     }
 };
 
+// ฟังก์ชันสำหรับ User: อัปโหลดสลิปการชำระเงิน
+const uploadPaymentSlip = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { orderId } = req.body;
+        const slipUrl = req.file ? req.file.path : null;
+
+        if (!slipUrl) {
+            return res.status(400).json({ message: "กรุณาแนบไฟล์สลิป" });
+        }
+
+        // ค้นหาออเดอร์ และตรวจสอบว่าเป็นของ user คนนี้จริงหรือไม่
+        const order = await db.Order.findOne({ where: { id: orderId, user_id: userId } });
+
+        if (!order) {
+            return res.status(404).json({ message: "ไม่พบคำสั่งซื้อ หรือคุณไม่มีสิทธิ์เข้าถึง" });
+        }
+        
+        // ไม่อนุญาตให้อัปโหลดซ้ำถ้าสถานะไม่ใช่ pending
+        if (order.order_status !== 'pending') {
+            return res.status(400).json({ message: "ไม่สามารถแจ้งชำระเงินสำหรับคำสั่งซื้อนี้ได้" });
+        }
+
+        // อัปเดต URL ของสลิป และเปลี่ยนสถานะ
+        order.payment_slip_url = slipUrl;
+        order.order_status = 'awaiting_verification'; // สถานะใหม่: รอการตรวจสอบ
+        await order.save();
+
+        res.status(200).json({ message: "อัปโหลดสลิปสำเร็จ! รอการตรวจสอบจากทางร้าน", order });
+
+    } catch (error) {
+        console.error("Error uploading payment slip:", error);
+        res.status(500).json({ message: "เกิดข้อผิดพลาดในการอัปโหลดสลิป" });
+    }
+};
+
+// ฟังก์ชันสำหรับ User: ยกเลิกคำสั่งซื้อของตัวเอง
+const cancelOrder = async (req, res) => {
+    try {
+        const userId = req.user.id; // ID จาก token
+        const { orderId } = req.body;
+
+        // ค้นหาออเดอร์ และตรวจสอบว่าเป็นของ user คนนี้จริงหรือไม่
+        const order = await db.Order.findOne({ where: { id: orderId, user_id: userId } });
+
+        if (!order) {
+            return res.status(404).json({ message: "ไม่พบคำสั่งซื้อ" });
+        }
+
+        // อนุญาตให้ยกเลิกได้เฉพาะออเดอร์ที่อยู่ในสถานะ 'pending' เท่านั้น
+        if (order.order_status !== 'pending') {
+            return res.status(400).json({ message: "ไม่สามารถยกเลิกคำสั่งซื้อที่ชำระเงินแล้วหรือกำลังจัดส่งได้" });
+        }
+
+        // อัปเดตสถานะเป็น 'Cancelled'
+        order.order_status = 'Cancelled';
+        await order.save();
+
+        res.status(200).json({ message: "ยกเลิกคำสั่งซื้อสำเร็จ" });
+
+    } catch (error) {
+        console.error("Error cancelling order:", error);
+        res.status(500).json({ message: "เกิดข้อผิดพลาดในการยกเลิกคำสั่งซื้อ" });
+    }
+};
+
 // Placing orders using Stripe Method
 const placeOrderStripe = async (req,res) => {
     try {
@@ -148,39 +214,59 @@ const verifyStripe = async (req,res) => {
 }
 
 
-// All Orders data for admin panel
-const listAllOrders = async (req,res) => {
+const listAllOrders = async (req, res) => {
     try {
-
         const orders = await db.Order.findAll({
-            include: {
-                model: db.User,
-                attributes: ['id', 'username', 'email'] // ดึงมาเฉพาะข้อมูล user ที่จำเป็น
-            },
-            order: [['order_date', 'DESC']] // เรียงจากออเดอร์ล่าสุดไปเก่าสุด
+            include: [
+                {
+                    model: db.User, // ดึงข้อมูลผู้สั่ง
+                    attributes: ['id', 'username', 'email']
+                },
+                {
+                    model: db.OrderItem, // ดึงรายการสินค้าในบิล
+                    include: {
+                        model: db.Product // และดึงข้อมูลสินค้าของแต่ละรายการ
+                    }
+                },
+                {
+                    model: db.UserAddress // <-- เพิ่ม: ดึงข้อมูลที่อยู่จัดส่ง
+                }
+            ],
+            order: [['order_date', 'DESC']]
         });
         res.status(200).json(orders);
-        
     } catch (error) {
         console.error("Error fetching all orders:", error);
         res.status(500).json({ message: "Error fetching all orders" });
     }
-}
+};
 
-// User Order Data For Frontend
-const userOrders = async (req,res) => {
+// ฟังก์ชันสำหรับดึงประวัติการสั่งซื้อของ user ที่ login อยู่
+const getMyOrders = async (req, res) => {
     try {
-        
-        const { userId } = req.body
+        // 1. ดึง userId จาก token ที่ auth middleware เตรียมไว้ให้
+        const userId = req.user.id;
 
-        const orders = await orderModel.find({ userId })
-        res.json({success:true,orders})
+        // 2. ค้นหาทุก Order ที่มี user_id ตรงกัน
+        // ใช้ 'include' เพื่อดึงข้อมูลที่เกี่ยวข้องกันมาด้วยในคราวเดียว
+        const orders = await db.Order.findAll({
+            where: { user_id: userId },
+            include: {
+                model: db.OrderItem, // ดึงรายการสินค้าในบิล (Order Items)
+                include: {
+                    model: db.Product // และในแต่ละรายการ ให้ดึงข้อมูลสินค้า (Product) มาด้วย
+                }
+            },
+            order: [['order_date', 'DESC']] // เรียงจากออเดอร์ล่าสุดไปเก่าสุด
+        });
+
+        res.status(200).json(orders);
 
     } catch (error) {
-        console.log(error);
-        res.json({success:false,message:error.message})
+        console.error("Error fetching user orders:", error);
+        res.status(500).json({ message: "Error fetching user orders" });
     }
-}
+};
 
 // update order status from AdminPanel
 const updateStatus = async (req,res) => {
@@ -206,4 +292,4 @@ const updateStatus = async (req,res) => {
     }
 };
 
-export {verifyStripe, placeOrder, placeOrderStripe,  listAllOrders, userOrders, updateStatus}
+export {verifyStripe, placeOrder, uploadPaymentSlip, cancelOrder, placeOrderStripe,  listAllOrders, getMyOrders, updateStatus}
