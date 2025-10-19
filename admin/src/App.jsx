@@ -8,6 +8,7 @@ import Orders from './pages/Orders';
 import Login from './components/Login';
 import { ToastContainer } from 'react-toastify';
 import { AdminProvider, useAdmin } from './context/AdminContext'; // 1. Import Provider และ Hook
+import Dashboard from './pages/Dashboard';
 
 export const backendUrl = import.meta.env.VITE_BACKEND_URL;
 export const currency = '฿';
@@ -41,6 +42,7 @@ const AppContent = () => {
                         <div className='flex-1 p-4 sm:p-6 text-gray-600'>
                             <Routes>
                                 {/* 3. ไม่ต้องส่ง token เป็น prop แล้ว */}
+                                <Route path='/dashboard' element={<Dashboard />} />
                                 <Route path='/add' element={<Add />} />
                                 <Route path='/list' element={<List />} />
                                 <Route path='/orders' element={<Orders />} />

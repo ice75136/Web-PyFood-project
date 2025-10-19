@@ -10,6 +10,7 @@ import orderRouter from './routes/orderRoute.js'
 import './config/db.js'
 import addressRouter from './routes/addressRoute.js'
 import db from './models/index.js'
+import dashboardRouter from './routes/dashboardRoute.js';
 
 // App Config
 const app = express()
@@ -31,6 +32,7 @@ app.use('/api/product',productRouter)
 app.use('/api/cart',cartRouter)
 app.use('/api/order',orderRouter)
 app.use('/api/address',addressRouter)
+app.use('/api/admin/dashboard', dashboardRouter);
 
 app.get('/',(req,res)=>{
     res.send("API Working")
