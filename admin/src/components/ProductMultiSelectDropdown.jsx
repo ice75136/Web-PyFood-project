@@ -48,7 +48,7 @@ const ProductMultiSelectDropdown = ({ options, selectedProductIds, onChange }) =
                 onClick={() => setIsOpen(!isOpen)}
                 className="w-full border rounded px-3 py-1.5 text-sm bg-gray-50 flex justify-between items-center"
             >
-                <span>{getButtonLabel()}</span>
+                <span className='truncate'>{getButtonLabel()}</span>
                 <img src={assets.dropdown_icon} alt="toggle dropdown" className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 

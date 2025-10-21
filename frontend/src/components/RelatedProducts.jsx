@@ -35,7 +35,7 @@ const RelatedProducts = ({ categories, productType, currentProductId }) => {
   return (
     <div className='my-24'>
         <div className='text-center text-3xl py-2'>
-            <Title text1={'RELATED'} text2={'PRODUCTS'} />
+            <Title text2={'สินค้าที่เกี่ยวข้อง'} />
         </div>
         <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 gap-y-6'>
             {related.map((item)=>(

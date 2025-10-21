@@ -1,32 +1,41 @@
 import db from '../models/index.js';
 import { Op, fn, col, literal } from 'sequelize';
 
-// ฟังก์ชันสำหรับดึงข้อมูลสรุป (ยอดขายวันนี้, ออเดอร์วันนี้, ผู้ใช้ใหม่วันนี้)
+// 1. ฟังก์ชันดึงข้อมูลสรุป
 const getSummary = async (req, res) => {
     try {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // ตั้งเวลาเป็นเที่ยงคืน
-        const tomorrow = new Date(today);
-        tomorrow.setDate(today.getDate() + 1);
+        const { startDate: startDateQuery, endDate: endDateQuery } = req.query;
 
-        const salesToday = await db.Order.sum('total_amount', {
+        let startDate = startDateQuery ? new Date(startDateQuery) : new Date(new Date().setDate(new Date().getDate() - 6));
+        let endDate = endDateQuery ? new Date(endDateQuery) : new Date();
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(23, 59, 59, 999);
+
+        const totalSales = await db.Order.sum('total_amount', {
             where: {
-                order_date: { [Op.gte]: today, [Op.lt]: tomorrow },
+                order_date: { [Op.gte]: startDate, [Op.lte]: endDate },
                 order_status: { [Op.notIn]: ['pending', 'Cancelled', 'awaiting_verification', 'payment_rejected'] }
             }
         });
 
         const totalCompletedOrders = await db.Order.count({
-            where: { order_status: 'Completed' }
+            where: {
+                order_date: { [Op.gte]: startDate, [Op.lte]: endDate },
+                order_status: 'Completed'
+            }
         });
 
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
         const newUsersTodayCount = await db.User.count({
             where: { created_at: { [Op.gte]: today, [Op.lt]: tomorrow } }
         });
 
         res.status(200).json({
-            salesToday: salesToday || 0,
-            totalCompletedOrders: totalCompletedOrders || 0, // <-- เปลี่ยนชื่อตัวแปร
+            totalSales: totalSales || 0,
+            totalCompletedOrders: totalCompletedOrders || 0,
             newUsersTodayCount: newUsersTodayCount || 0
         });
     } catch (error) {
@@ -35,73 +44,62 @@ const getSummary = async (req, res) => {
     }
 };
 
-// --- ส่วนที่แก้ไข: ฟังก์ชันดึงข้อมูลยอดขายสำหรับกราฟ ---
+// 2. ฟังก์ชันดึงข้อมูลกราฟ
 const getSalesChartData = async (req, res) => {
     try {
-        const range = req.query.range || 'daily';
-        const productIdsParam = req.query.productIds; // รับค่า productIds (string)
+        const { startDate: startDateQuery, endDate: endDateQuery, productIds: productIdsParam } = req.query;
 
         let orderWhereClause = {
             order_status: { [Op.notIn]: ['pending', 'Cancelled', 'awaiting_verification', 'payment_rejected'] }
         };
         let orderItemWhereClause = {};
 
-        const endDate = new Date();
-        let startDate = new Date();
+        let startDate = startDateQuery ? new Date(startDateQuery) : new Date(new Date().setDate(new Date().getDate() - 6));
+        let endDate = endDateQuery ? new Date(endDateQuery) : new Date();
         startDate.setHours(0, 0, 0, 0);
-
-        if (range === 'daily') {
-            startDate.setDate(endDate.getDate() - 6);
-        } else if (range === 'monthly') {
-            startDate.setMonth(endDate.getMonth() - 11);
-            startDate.setDate(1); // เริ่มต้นที่วันที่ 1 ของเดือนแรก
-        } else {
-             startDate.setDate(endDate.getDate() - 6);
-        }
-        orderWhereClause.order_date = { [Op.gte]: startDate };
+        endDate.setHours(23, 59, 59, 999);
+        orderWhereClause.order_date = { [Op.gte]: startDate, [Op.lte]: endDate };
 
         if (productIdsParam) {
             const productIds = productIdsParam.split(',').map(id => parseInt(id.trim()));
             if (productIds.length > 0) {
-                orderItemWhereClause.product_id = { [Op.in]: productIds }; // กรองตาม product_id ที่เลือก
+                orderItemWhereClause.product_id = { [Op.in]: productIds };
             }
         }
 
-        let attributes;
-        let group;
-        let order;
-
-        if (range === 'daily') {
-             attributes = [
-                 [fn('DATE', col('Order.order_date')), 'date'],
-                 'product_id', // <-- 1. เพิ่ม product_id เข้าไปใน attributes
-                 [fn('SUM', literal('`OrderItem`.`quantity` * `OrderItem`.`price_per_unit`')), 'totalSales']
-             ];
-             group = [fn('DATE', col('Order.order_date')), 'product_id']; // <-- 2. Group ด้วย product_id ด้วย
-             order = [[fn('DATE', col('Order.order_date')), 'ASC']];
-         } else { // monthly
-             attributes = [
-                 [fn('YEAR', col('Order.order_date')), 'year'],
-                 [fn('MONTH', col('Order.order_date')), 'month'],
-                 'product_id', // <-- 1. เพิ่ม product_id เข้าไปใน attributes
-                 [fn('SUM', literal('`OrderItem`.`quantity` * `OrderItem`.`price_per_unit`')), 'totalSales']
-             ];
-             group = [fn('YEAR', col('Order.order_date')), fn('MONTH', col('Order.order_date')), 'product_id']; // <-- 2. Group ด้วย product_id ด้วย
-             order = [[fn('YEAR', col('Order.order_date')), 'ASC'], [fn('MONTH', col('Order.order_date')), 'ASC']];
-         }
+        const diffTime = Math.abs(endDate - startDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        let attributes, group, order, isDaily;
+        
+        if (diffDays <= 90) { 
+            isDaily = true;
+            attributes = [
+                [fn('DATE', col('Order.order_date')), 'date'],
+                'product_id',
+                [fn('SUM', literal('`OrderItem`.`quantity` * `OrderItem`.`price_per_unit`')), 'totalSales']
+            ];
+            group = [fn('DATE', col('Order.order_date')), 'product_id', 'Product.id'];
+            order = [[fn('DATE', col('Order.order_date')), 'ASC']];
+        } else {
+            isDaily = false;
+            attributes = [
+                [fn('YEAR', col('Order.order_date')), 'year'],
+                [fn('MONTH', col('Order.order_date')), 'month'],
+                'product_id',
+                [fn('SUM', literal('`OrderItem`.`quantity` * `OrderItem`.`price_per_unit`')), 'totalSales']
+            ];
+            group = [fn('YEAR', col('Order.order_date')), fn('MONTH', col('Order.order_date')), 'product_id', 'Product.id'];
+            order = [[fn('YEAR', col('Order.order_date')), 'ASC'], [fn('MONTH', col('Order.order_date')), 'ASC']];
+        }
 
         let data = await db.OrderItem.findAll({
             attributes: attributes,
             where: orderItemWhereClause,
-            include: [{
-                model: db.Order,
-                attributes: [],
-                where: orderWhereClause,
-                required: true
-            }, { // <-- 3. เพิ่ม include Product เพื่อเอาชื่อสินค้า
-                model: db.Product,
-                attributes: ['name']
-            }],
+            include: [
+                { model: db.Order, attributes: [], where: orderWhereClause, required: true },
+                { model: db.Product, attributes: ['name'] } // <-- ต้อง Include Product
+            ],
             group: group,
             order: order,
             raw: true
@@ -110,79 +108,125 @@ const getSalesChartData = async (req, res) => {
         data = data.map(item => ({
             ...item,
             totalSales: parseFloat(item.totalSales) || 0,
-            productName: item['Product.name'] // <-- ดึงชื่อสินค้าจาก JOIN
+            productName: item['Product.name'],
+            isDaily: isDaily
         }));
 
-        console.log('--- Processed Sales Chart data (multiple lines):', JSON.stringify(data, null, 2));
-
         res.status(200).json(data);
-
     } catch (error) {
         console.error("Error fetching sales chart data:", error);
         res.status(500).json({ message: "Error fetching sales chart data" });
     }
 };
 
-
-// ฟังก์ชันสำหรับดึงข้อมูลสินค้าขายดี (โค้ดเดิมถูกต้องแล้ว)
+// 3. ฟังก์ชันดึงสินค้าขายดี (โค้ดที่แก้ไขแล้ว)
 const getTopProducts = async (req, res) => {
      try {
         const limit = parseInt(req.query.limit) || 5;
+        const productIdsParam = req.query.productIds;
+        let orderItemWhereClause = {};
+
+        if (productIdsParam) {
+            const productIds = productIdsParam.split(',').map(id => parseInt(id.trim()));
+            if (productIds.length > 0) {
+                orderItemWhereClause.product_id = { [Op.in]: productIds };
+            }
+        }
+
         const topProducts = await db.OrderItem.findAll({
             attributes: [
                 'product_id',
                 [fn('SUM', col('quantity')), 'totalQuantitySold']
             ],
-            include: [{ model: db.Product, attributes: ['name'] }],
-            group: ['product_id', 'Product.id'],
+            where: orderItemWhereClause,
+            include: [
+                { 
+                    model: db.Product, 
+                    attributes: ['name'] // <-- ต้อง Include Product ที่นี่
+                },
+                {
+                    model: db.Order,
+                    attributes: [],
+                    where: {
+                        order_status: { [Op.notIn]: ['pending', 'Cancelled', 'awaiting_verification', 'payment_rejected'] }
+                    },
+                    required: true
+                }
+            ],
+            group: ['product_id', 'Product.id'], // <-- ต้อง Group by Product.id ด้วย
             order: [[literal('totalQuantitySold'), 'DESC']],
-            limit: limit
+            limit: limit,
+            raw: true // <-- เพิ่ม raw: true
         });
-        res.status(200).json(topProducts);
+
+        // แปลงข้อมูลที่ได้จาก raw:true
+        const result = topProducts.map(item => ({
+            product_id: item.product_id,
+            totalQuantitySold: parseInt(item.totalQuantitySold) || 0,
+            Product: {
+                name: item['Product.name'] // <-- ดึงข้อมูล Product.name
+            }
+        }));
+
+        res.status(200).json(result);
     } catch (error) {
         console.error("Error fetching top products:", error);
         res.status(500).json({ message: "Error fetching top products" });
     }
 };
 
-// --- ส่วนที่แก้ไข: ฟังก์ชันดึงยอดขายสินค้าตามช่วงเวลา (แก้ไข include ซ้ำซ้อน) ---
+
+// 4. (ไม่จำเป็นต้องใช้แล้ว แต่ใส่ไว้เผื่อ)
 const getProductSales = async (req, res) => {
     try {
-        const range = req.query.range || '7days';
-        let startDate = new Date();
-        startDate.setHours(0, 0, 0, 0);
+        const { startDate, endDate, productIds: productIdsParam } = req.query;
+        let orderWhereClause = {
+            order_status: { [Op.notIn]: ['pending', 'Cancelled', 'awaiting_verification', 'payment_rejected'] }
+        };
+        let orderItemWhereClause = {};
+        let start = startDate ? new Date(startDate) : new Date(new Date().setDate(new Date().getDate() - 6));
+        let end = endDate ? new Date(endDate) : new Date();
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        orderWhereClause.order_date = { [Op.gte]: start, [Op.lte]: end };
 
-        switch (range) { /* ... โค้ดกำหนด startDate ... */ }
+        if (productIdsParam) {
+            const productIds = productIdsParam.split(',').map(id => parseInt(id.trim()));
+            if (productIds.length > 0) {
+                orderItemWhereClause.product_id = { [Op.in]: productIds };
+            }
+        }
 
         const productSales = await db.OrderItem.findAll({
             attributes: [
                 'product_id',
-                [fn('SUM', col('quantity')), 'totalQuantitySold']
+                [fn('SUM', col('quantity')), 'totalQuantitySold'],
+                [fn('SUM', literal('quantity * price_per_unit')), 'totalRevenue']
             ],
-            include: [ // include แค่ 2 model นี้พอ
-                {
-                    model: db.Product,
-                    attributes: ['name']
-                },
-                {
-                    model: db.Order,
-                    attributes: [],
-                    where: {
-                        order_date: { [Op.gte]: startDate },
-                         order_status: { [Op.notIn]: ['pending', 'Cancelled', 'awaiting_verification', 'payment_rejected'] }
-                    },
-                    required: true // ใช้ INNER JOIN เพื่อกรอง
-                }
+            where: orderItemWhereClause,
+            include: [
+                { model: db.Product, attributes: ['name', 'price'] },
+                { model: db.Order, attributes: [], where: orderWhereClause, required: true }
             ],
-            group: ['product_id', 'Product.id'],
-            order: [[literal('totalQuantitySold'), 'DESC']]
+            group: ['product_id', 'Product.id', 'Product.name', 'Product.price'],
+            order: [[literal('totalRevenue'), 'DESC']],
+            raw: true
         });
-        res.status(200).json(productSales);
+
+        const result = productSales.map(item => ({
+            productId: item.product_id,
+            name: item['Product.name'],
+            currentPrice: item['Product.price'],
+            totalQuantitySold: parseInt(item.totalQuantitySold) || 0,
+            totalRevenue: parseFloat(item.totalRevenue) || 0
+        }));
+
+        res.status(200).json(result);
     } catch (error) {
         console.error("Error fetching product sales:", error);
         res.status(500).json({ message: "Error fetching product sales" });
     }
 };
 
-
+// 5. อัปเดต export
 export { getSummary, getSalesChartData, getTopProducts, getProductSales };
