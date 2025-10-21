@@ -1,5 +1,5 @@
 import express from 'express'
-import {placeOrder, placeOrderStripe, listAllOrders, updateStatus, verifyStripe, getMyOrders, uploadPaymentSlip, cancelOrder} from '../controllers/orderController.js'
+import {placeOrder, placeOrderStripe, listAllOrders, updateStatus, verifyStripe, getMyOrders, uploadPaymentSlip, cancelOrder, getOrderById} from '../controllers/orderController.js'
 import adminAuth from '../middleware/adminAuth.js'
 import authUser from '../middleware/auth.js'
 import upload from '../middleware/multer.js'
@@ -21,5 +21,8 @@ orderRouter.post('/cancel', authUser, cancelOrder);
 // verify payment
 orderRouter.post('/upload-slip', authUser, upload.single('slip'), uploadPaymentSlip);
 orderRouter.post('/verifyStripe',authUser, verifyStripe)
+
+// ดึงข้อมูลใบเสร็จ
+orderRouter.get('/:orderId', authUser, getOrderById);
 
 export default orderRouter

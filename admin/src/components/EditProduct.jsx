@@ -3,30 +3,27 @@ import axios from 'axios'
 import { backendUrl } from '../App'
 import { toast } from 'react-toastify'
 import { useAdmin } from '../context/AdminContext'
-
+import { assets } from '../assets/assets' // Import assets
 
 const EditProduct = ({ open, onClose, product, fetchList }) => {
-    const { token } = useAdmin();
-
+    const { token } = useAdmin(); // ดึง token จาก Context
     const [image1, setImage1] = useState(null);
     const [image2, setImage2] = useState(null);
     const [image3, setImage3] = useState(null);
     const [image4, setImage4] = useState(null);
     const [oldImages, setOldImages] = useState([]);
     const [selectedCategories, setSelectedCategories] = useState([]);
-
+    
     const [formData, setFormData] = useState({
         id: "",
         name: "",
         description: "",
         product_type_id: "",
         price: "",
-        sizes: "",
+        sizes: "", 
         stock_quantity: "",
-        bestseller: false,
     });
 
-    // --- 2. อัปเดต useEffect ให้จัดการกับ Array ของ Categories ---
     useEffect(() => {
         if (product) {
             setFormData({
@@ -35,24 +32,17 @@ const EditProduct = ({ open, onClose, product, fetchList }) => {
                 description: product.description || "",
                 product_type_id: product.product_type_id || "",
                 price: product.price || "",
-                sizes: product.sizes ? product.sizes.join(', ') : "",
+                // ดึงข้อมูลตัวแรกจาก Array (ถ้ามี)
+                sizes: product.sizes && product.sizes.length > 0 ? product.sizes[0] : "", 
                 stock_quantity: product.stock_quantity || "",
-                bestseller: product.bestseller || false,
             });
-
-            // ดึง ID ของหมวดหมู่ที่มีอยู่มาใส่ใน state
-            // product.Categories คือ Array ของ object ที่ Backend ส่งมา
             if (product.Categories) {
                 setSelectedCategories(product.Categories.map(cat => String(cat.id)));
             } else {
-                setSelectedCategories([]); // ถ้าไม่มีให้เคลียร์ค่าเก่า
+                setSelectedCategories([]);
             }
-
             setOldImages(product.images && product.images.length > 0 ? product.images : [product.image_url]);
-            setImage1(null);
-            setImage2(null);
-            setImage3(null);
-            setImage4(null);
+            setImage1(null); setImage2(null); setImage3(null); setImage4(null);
         }
     }, [product]);
 
@@ -65,8 +55,7 @@ const EditProduct = ({ open, onClose, product, fetchList }) => {
             [name]: type === "checkbox" ? checked : value,
         }));
     };
-
-    // --- 3. สร้างฟังก์ชันสำหรับจัดการ Checkbox ---
+    
     const handleCategoryChange = (e) => {
         const categoryId = e.target.value;
         setSelectedCategories(prev =>
@@ -80,21 +69,18 @@ const EditProduct = ({ open, onClose, product, fetchList }) => {
         e.preventDefault();
         try {
             const data = new FormData();
-
-            // --- 4. อัปเดตการส่งข้อมูล ---
+            
             data.append("id", formData.id);
             data.append("name", formData.name);
             data.append("description", formData.description);
             data.append("product_type_id", formData.product_type_id);
             data.append("price", formData.price);
-            data.append("bestseller", formData.bestseller);
-
             data.append("stock_quantity", formData.stock_quantity);
 
-            const sizesArray = formData.sizes.split(',').map(s => s.trim()).filter(s => s);
+            // แปลงน้ำหนักเดียวกลับไปเป็น Array
+            const sizesArray = formData.sizes ? [formData.sizes] : [];
             data.append("sizes", JSON.stringify(sizesArray));
-
-            // แปลง Array ของ Category ID เป็น JSON String
+            
             data.append("category_ids", JSON.stringify(selectedCategories));
 
             if (image1) data.append("image1", image1);
@@ -126,7 +112,7 @@ const EditProduct = ({ open, onClose, product, fetchList }) => {
             <div className='w-full max-w-2xl bg-white p-4 rounded-md max-h-[90vh] overflow-y-auto'>
                 <h2 className='text-xl font-semibold mb-4'>แก้ไขสินค้า</h2>
                 <form onSubmit={handleSubmit} className='flex flex-col w-full items-start gap-4'>
-
+                    
                     <div>
                         <p className='mb-2'>อัพโหลดรูปภาพ (เลือกเพื่อเปลี่ยน)</p>
                         <div className='flex gap-2 flex-wrap'>
@@ -151,7 +137,6 @@ const EditProduct = ({ open, onClose, product, fetchList }) => {
                     </div>
 
                     <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 w-full'>
-                        {/* --- 5. เปลี่ยนจาก Select เป็น Checkboxes --- */}
                         <div>
                             <p className='mb-2'>ประเภทสินค้า (เลือกได้หลายอย่าง)</p>
                             <div className='flex flex-col gap-2 p-3 border rounded-md'>
@@ -185,8 +170,8 @@ const EditProduct = ({ open, onClose, product, fetchList }) => {
                             </select>
                         </div>
                     </div>
-
-                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-[500px]'>
+                    
+                    <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 w-full'>
                         <div>
                             <p className='mb-2'>ราคาสินค้า</p>
                             <input className='w-full px-3 py-2 border rounded' name="price" value={formData.price} onChange={handleChange} type="number" placeholder='250' />
@@ -196,16 +181,10 @@ const EditProduct = ({ open, onClose, product, fetchList }) => {
                             <input className='w-full px-3 py-2 border rounded' name="stock_quantity" value={formData.stock_quantity} onChange={handleChange} type="number" placeholder='50' />
                         </div>
                         <div>
-                            <p className='mb-2'>ขนาด (กรัม) <span className='text-gray-500 text-xs'>(คั่นด้วยลูกน้ำ)</span></p>
-                            <input placeholder='100, 170' className='w-full px-3 py-2 border rounded' name="sizes" value={formData.sizes} onChange={handleChange} type="text" />
+                            <p className='mb-2'>น้ำหนักสินค้า (กรัม)</p>
+                            <input placeholder='100' className='w-full px-3 py-2 border rounded' name="sizes" value={formData.sizes} onChange={handleChange} type="number" />
                         </div>
                     </div>
-
-                    <div className='flex gap-2 mt-2'>
-                        <input name="bestseller" type="checkbox" checked={formData.bestseller} onChange={handleChange} id="edit-bestseller" />
-                        <label className='cursor-pointer' htmlFor="edit-bestseller">เพิ่มเป็นสินค้าขายดี</label>
-                    </div>
-
                     <div className='flex items-center justify-end w-full gap-4 mt-4'>
                         <button className='w-28 py-2 bg-gray-300 text-black cursor-pointer rounded' onClick={onClose} type="button">ยกเลิก</button>
                         <button className='w-28 py-2 bg-blue-600 text-white cursor-pointer rounded' type="submit">บันทึก</button>

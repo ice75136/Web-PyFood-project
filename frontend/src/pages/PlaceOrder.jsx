@@ -6,7 +6,7 @@ import axios from 'axios'
 import { toast } from 'react-toastify'
 
 const PlaceOrder = () => {
-    const { navigate, backendUrl, token, getCartAmount, delivery_fee, setCartItems } = useContext(ShopContext);
+    const { navigate, backendUrl, token, setCartItems, cartItems, selectedItems, setSelectedItems } = useContext(ShopContext);
 
     const [userAddresses, setUserAddresses] = useState([]);
     const [selectedAddressId, setSelectedAddressId] = useState('');
@@ -42,27 +42,42 @@ const PlaceOrder = () => {
     const onSubmitHandler = async (event) => {
         event.preventDefault();
         try {
+            // 2. ตรวจสอบว่ามีสินค้าที่เลือกหรือไม่
+            if (selectedItems.length === 0) {
+                 toast.error("คุณยังไม่ได้เลือกสินค้าที่จะสั่งซื้อ", { autoClose: 2000 });
+                 navigate('/cart'); // กลับไปหน้าตะกร้า
+                 return;
+            }
             if (!selectedAddressId) {
                 toast.error("กรุณาเลือกที่อยู่สำหรับจัดส่ง");
                 return;
             }
+
+            // 3. ส่ง itemsToPurchase (Array สินค้าที่เลือก) ไปด้วย
             const orderData = { 
                 user_address_id: selectedAddressId,
-                payment_method: paymentMethod 
+                payment_method: paymentMethod,
+                itemsToPurchase: selectedItems 
             };
+            
             const response = await axios.post(
                 backendUrl + '/api/order/place',
                 orderData,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
+
             if (response.status === 201) {
-                setCartItems({});
+                // 4. ล้างตะกร้าใน Frontend (เฉพาะส่วนที่เลือก)
+                const newCartItems = { ...cartItems };
+                selectedItems.forEach(id => delete newCartItems[id]);
+                setCartItems(newCartItems);
+                setSelectedItems([]); // เคลียร์ State ที่เลือก
+
                 if (paymentMethod === 'cod') {
-                    localStorage.removeItem('lastOrderTab');
+                    localStorage.removeItem('lastOrderTab'); 
                     navigate('/profile/orders');
                     toast.success("สั่งซื้อสำเร็จ!");
                 } else {
-                    // ถ้าเป็นวิธีอื่น พาไปหน้า /myorders พร้อม state (จะเปิดแท็บ 'to_pay')
                     navigate('/profile/orders', { state: { fromPlaceOrder: true } });
                     toast.success("สั่งซื้อสำเร็จ! กรุณาแจ้งชำระเงิน");
                 }
@@ -149,7 +164,10 @@ const PlaceOrder = () => {
                 </div>
 
                 <div className='w-full text-end mt-8'>
-                    <button type='submit' className='bg-black text-white px-16 py-3 text-sm'>ยืนยันคำสั่งซื้อ</button>
+                    {/* 5. อัปเดตข้อความในปุ่ม */}
+                    <button type='submit' className='bg-black text-white px-16 py-3 text-sm'>
+                        ยืนยันคำสั่งซื้อ ({selectedItems.length} รายการ)
+                    </button>
                 </div>
             </div>
         </form>

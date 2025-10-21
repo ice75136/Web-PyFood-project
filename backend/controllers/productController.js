@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from "cloudinary"
 import db from '../models/index.js';
+import { Op, fn, col, literal } from 'sequelize';
 
 
 // function for add product
@@ -236,8 +237,63 @@ const updateProduct = async (req, res) => {
     }
 };
 
+const getBestSellers = async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 5; // เอา 5 อันดับแรก
+
+        // 1. ค้นหา ID ของสินค้าที่ขายดีที่สุด
+        const topProductIds = await db.OrderItem.findAll({
+            attributes: [
+                'product_id',
+                [fn('SUM', col('quantity')), 'totalQuantitySold']
+            ],
+            include: [
+                {
+                    model: db.Order, // Join Order เพื่อกรองสถานะ
+                    attributes: [],
+                    where: { 
+                        order_status: { [Op.notIn]: ['pending', 'Cancelled', 'awaiting_verification', 'payment_rejected'] }
+                    },
+                    required: true 
+                },
+                 {
+                    model: db.Product, // Join Product เพื่อกรอง is_active
+                    attributes: [],
+                    where: { is_active: true }, // เอาเฉพาะสินค้าที่ยังขายอยู่
+                    required: true
+                }
+            ],
+            group: ['product_id'],
+            order: [[literal('totalQuantitySold'), 'DESC']],
+            limit: limit,
+            raw: true
+        });
+
+        // 2. ดึงข้อมูลสินค้าฉบับเต็มของ ID ที่ได้มา
+        const productIds = topProductIds.map(item => item.product_id);
+
+        const bestSellers = await db.Product.findAll({
+            where: {
+                id: { [Op.in]: productIds },
+                is_active: true
+            },
+            include: [
+                { model: db.Category },
+                { model: db.ProductType }
+            ]
+        });
+        
+        // 3. เรียงลำดับข้อมูลที่ได้มาใหม่ ตามยอดขาย (เพราะ findAll ไม่การันตีลำดับ)
+        const sortedBestSellers = productIds.map(id => bestSellers.find(p => p.id === id)).filter(Boolean);
+
+        res.status(200).json(sortedBestSellers);
+
+    } catch (error) {
+        console.error("Error fetching best sellers:", error);
+        res.status(500).json({ message: "Error fetching best sellers" });
+    }
+};
 
 
-
-export { listProducts, listAllProductsForAdmin, addProduct, removeProduct, restoreProduct, hardDeleteProduct, singleProduct, updateProduct }
+export { listProducts, listAllProductsForAdmin, addProduct, removeProduct, restoreProduct, hardDeleteProduct, singleProduct, updateProduct, getBestSellers }
 

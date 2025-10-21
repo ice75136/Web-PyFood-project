@@ -18,6 +18,7 @@ import Profile from './pages/Profile';
 import MyOrders from './components/MyOrders';
 import ProfileInfo from './components/ProfileInfo';
 import MyAddresses from './components/MyAddresses';
+import ReceiptPage from './pages/ReceiptPage';
 
 
 const App = () => {
@@ -50,6 +51,7 @@ const App = () => {
         <Route path='/place-order' element={<PlaceOrder />} />
         {/* <Route path='/orders' element={<Orders />} /> */}
         <Route path='/verify' element={<Verify />} />
+        <Route path='/order/receipt/:orderId' element={<ReceiptPage />} />
 
         <Route path='/profile' element={<Profile />}>
           {/* หน้าย่อยจะถูกแสดงผลที่นี่ */}

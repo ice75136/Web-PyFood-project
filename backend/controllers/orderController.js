@@ -7,86 +7,114 @@ import Stripe from 'stripe'
 const currency = 'thb'
 const deliveryCharge = 10
 
+const DELIVERY_FEE = 50;
+
 // gateway initialize
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 // Placing orders using COD Method
 const placeOrder = async (req, res) => {
-    const t = await db.sequelize.transaction();
+    // 1. เริ่ม Transaction
+    const t = await db.sequelize.transaction(); 
 
     try {
         const userId = req.user.id;
-        const { user_address_id, payment_method } = req.body;
+        // 2. รับ itemsToPurchase (Array of item IDs) จาก req.body
+        const { user_address_id, payment_method, itemsToPurchase } = req.body; 
 
         if (!user_address_id) {
-            await t.rollback();
+            await t.rollback(); 
             return res.status(400).json({ message: "Shipping address is required" });
         }
         if (!payment_method) {
-            await t.rollback();
+            await t.rollback(); 
             return res.status(400).json({ message: "Payment method is required" });
+        }
+        // 3. ตรวจสอบว่ามีสินค้าที่เลือกส่งมาหรือไม่
+        if (!itemsToPurchase || itemsToPurchase.length === 0) {
+            await t.rollback();
+            return res.status(400).json({ message: "กรุณาเลือกสินค้าที่จะซื้อ" });
         }
 
         const user = await db.User.findByPk(userId);
-        const cartData = user.cartData || {};
-        const itemIds = Object.keys(cartData);
+        const cartData = user.cartData || {}; // <-- นี่คือตะกร้า "ทั้งหมด"
+        
+        // --- 4. [!!! จุดที่ถูกต้อง !!!] ---
+        // ใช้ ID จาก "itemsToPurchase" ที่ส่งมาจาก Frontend
+        // ไม่ใช่จาก "cartData" ทั้งหมด
+        const itemIds = itemsToPurchase; 
+        // ---------------------------------
 
-        if (itemIds.length === 0) {
-            await t.rollback();
-            return res.status(400).json({ message: "Cart is empty" });
-        }
+        const productsInCart = await db.Product.findAll({ 
+            where: { id: itemIds }, // <-- ใช้ "itemIds" ที่ถูกต้อง (จากข้อ 4)
+            lock: t.LOCK.UPDATE,
+            transaction: t
+        });
 
-        let totalAmount = 0;
-        const productsInCart = await db.Product.findAll({ where: { id: itemIds } });
-
-        if(productsInCart.length !== itemIds.length){
+        // ... (การตรวจสอบ productsInCart.length, stock, Crate ID) ...
+        if (productsInCart.length !== itemIds.length) {
              await t.rollback();
              return res.status(400).json({ message: "สินค้าบางรายการในตะกร้าของคุณไม่มีจำหน่ายแล้ว" });
         }
 
+        let subTotal = 0;
+        let orderItemsData = [];
+        const CRATE_PRODUCT_TYPE_ID = 5;
+
         for (const product of productsInCart) {
-            const quantity = cartData[product.id];
-            if(!quantity || quantity <= 0){
+            // 5. ดึงจำนวน (quantity) จากตะกร้าทั้งหมด
+            const quantity = cartData[product.id]; 
+
+            if (!quantity || quantity <= 0) {
                  await t.rollback();
-                 return res.status(400).json({ message: `จำนวนสินค้า ${product.name} ไม่ถูกต้อง` });
+                 return res.status(400).json({ message: `สินค้า ${product.name} ไม่มีอยู่ในตะกร้า` });
             }
-            totalAmount += product.price * quantity;
+            if (product.stock_quantity < quantity) { /* ... (rollback) ... */ }
+            if (product.product_type_id === CRATE_PRODUCT_TYPE_ID && quantity > 1) { /* ... (rollback) ... */ }
+
+            subTotal += product.price * quantity; 
+            orderItemsData.push({
+                product_id: product.id,
+                quantity: quantity,
+                price_per_unit: product.price
+            });
         }
 
-        // --- ส่วนที่แก้ไข: กำหนดสถานะเริ่มต้นตาม payment_method ---
-        let initialOrderStatus;
-        if (payment_method === 'cod') {
-            initialOrderStatus = 'Processing'; // ถ้าเป็น COD ให้เริ่มที่ "กำลังเตรียมจัดส่ง"
-        } else {
-            initialOrderStatus = 'pending'; // ถ้าเป็นวิธีอื่น ให้เริ่มที่ "รอชำระเงิน"
-        }
-
+        const finalTotalAmount = subTotal + DELIVERY_FEE;
+        
+        const initialOrderStatus = (payment_method === 'cod') ? 'Processing' : 'pending';
         const newOrder = await db.Order.create({
             user_id: userId,
             user_address_id: user_address_id,
-            total_amount: totalAmount,
-            order_status: initialOrderStatus, // <-- ใช้สถานะเริ่มต้นที่กำหนดไว้
+            total_amount: finalTotalAmount,
+            order_status: initialOrderStatus,
             payment_method: payment_method
         }, { transaction: t });
 
-        const orderItemsData = productsInCart.map(product => ({
-            order_id: newOrder.id,
-            product_id: product.id,
-            quantity: cartData[product.id],
-            price_per_unit: product.price
-        }));
-        await db.OrderItem.bulkCreate(orderItemsData, { transaction: t });
+        const itemsWithOrderId = orderItemsData.map(item => ({ ...item, order_id: newOrder.id }));
+        await db.OrderItem.bulkCreate(itemsWithOrderId, { transaction: t });
 
-        user.cartData = {};
+        for (const product of productsInCart) {
+            const quantity = cartData[product.id];
+            await product.decrement('stock_quantity', { by: quantity, transaction: t });
+        }
+
+        // --- 6. [!!! จุดที่ถูกต้อง !!!] ---
+        // ลบ "เฉพาะ" สินค้าที่ซื้อไปแล้ว (itemIds) ออกจาก cartData
+        const newCartData = { ...cartData };
+        for (const itemId of itemIds) { // <-- ใช้ "itemIds" ที่ถูกต้อง
+            delete newCartData[itemId];
+        }
+        user.cartData = newCartData;
         user.changed('cartData', true);
         await user.save({ transaction: t });
+        // ---------------------------------
 
-        await t.commit();
-
+        await t.commit(); 
         res.status(201).json({ message: "Order placed successfully", orderId: newOrder.id });
 
     } catch (error) {
-        await t.rollback();
+        await t.rollback(); 
         console.error("Error placing order, transaction rolled back:", error);
         res.status(500).json({ message: "Error placing order" });
     }
@@ -313,4 +341,32 @@ const updateStatus = async (req,res) => {
     }
 };
 
-export {verifyStripe, placeOrder, uploadPaymentSlip, cancelOrder, placeOrderStripe,  listAllOrders, getMyOrders, updateStatus}
+const getOrderById = async (req, res) => {
+    try {
+        const userId = req.user.id; // ID จาก token
+        const { orderId } = req.params; // ID จาก URL
+
+        const order = await db.Order.findOne({
+            where: { 
+                id: orderId, 
+                user_id: userId // ตรวจสอบว่าเป็นเจ้าของออเดอร์จริง
+            },
+            include: [
+                { model: db.UserAddress }, // ดึงข้อมูลที่อยู่
+                { model: db.OrderItem, include: { model: db.Product } } // ดึงรายการสินค้าและข้อมูลสินค้า
+            ]
+        });
+
+        if (!order) {
+            return res.status(404).json({ message: "ไม่พบคำสั่งซื้อ" });
+        }
+
+        res.status(200).json(order);
+
+    } catch (error) {
+        console.error("Error fetching order by ID:", error);
+        res.status(500).json({ message: "เกิดข้อผิดพลาด" });
+    }
+};
+
+export {verifyStripe, placeOrder, uploadPaymentSlip, cancelOrder, placeOrderStripe,  listAllOrders, getMyOrders, updateStatus, getOrderById}

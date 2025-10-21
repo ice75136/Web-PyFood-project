@@ -26,7 +26,7 @@ const Footer = () => {
             <div>
                 <p className='text-xl font-medium mb-5'>ติดต่อ</p>
                 <ul className='flex flex-col gap-1 text-gray-600'>
-                    <li>เบอร์โทร 027-091-1901, 0-2323-1798, 0-2707-8338</li>
+                    <li>เบอร์โทร 027-091-1901, <br />02-323-1798, 02-707-8338</li>
                     <li>แฟกซ์ 0-2709-0792, 0-707-8338</li>
                     <li>pyfood@hotmail.com</li>
                     <li>phayong2542@hotmail.com</li>

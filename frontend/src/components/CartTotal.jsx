@@ -1,35 +1,32 @@
 import React, { useContext } from 'react'
 import { ShopContext } from '../context/ShopContext'
-import Title from './Title';
 
 const CartTotal = () => {
+    // 1. เปลี่ยน getCartAmount เป็น getSelectedCartAmount
+    const { getSelectedCartAmount, currency, delivery_fee } = useContext(ShopContext);
+    
+    // 2. เรียกใช้ฟังก์ชันใหม่
+    const totalAmount = getSelectedCartAmount(); 
 
-    const {currency, delivery_fee,getCartAmount} = useContext(ShopContext);
-
-  return (
-    <div className='w-full'>
-        <div className='text-2xl'>
-            <Title text2={'ยอดรวมในตะกร้า'}/>
-        </div>
-
-        <div className='flex flex-col gap-2 mt-2 text-sm'>
+    return (
+        <div className='flex flex-col gap-4 text-gray-700'>
+            <h2 className='text-xl font-semibold'>สรุปยอดตะกร้าสินค้า</h2>
             <div className='flex justify-between'>
-                <p>ผลรวมสินค้า</p>
-                <p>{currency} {getCartAmount()}.00</p>
+                <p>ยอดรวม (ที่เลือก)</p>
+                <p>{currency}{totalAmount.toFixed(2)}</p>
             </div>
             <hr />
             <div className='flex justify-between'>
                 <p>ค่าจัดส่ง</p>
-                <p>{currency} {delivery_fee}.00</p>
+                <p>{currency}{totalAmount > 0 ? delivery_fee : 0}</p>
             </div>
             <hr />
-            <div className='flex justify-between'>
-                <b>ผลรวมทั้งหมด</b>
-                <b>{currency} {getCartAmount() === 0 ? 0 : getCartAmount() + delivery_fee}.00</b>
+            <div className='flex justify-between font-semibold text-lg'>
+                <p>ยอดรวมสุทธิ</p>
+                <p>{currency}{totalAmount > 0 ? (totalAmount + delivery_fee).toFixed(2) : 0}</p>
             </div>
         </div>
-    </div>
-  )
+    )
 }
 
 export default CartTotal
