@@ -12,7 +12,7 @@ const PlaceOrder = () => {
     const [selectedAddressId, setSelectedAddressId] = useState('');
 
     // --- 1. เพิ่ม State สำหรับเก็บวิธีการชำระเงินที่เลือก ---
-    const [paymentMethod, setPaymentMethod] = useState('bank_transfer'); // 'cod' = Cash on Delivery
+    const [paymentMethod, setPaymentMethod] = useState('bank_transfer'); 
 
     const fetchAddresses = async () => {
         if (token) {

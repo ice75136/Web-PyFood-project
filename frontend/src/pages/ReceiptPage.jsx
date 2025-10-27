@@ -2,11 +2,11 @@ import React, { useContext, useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
 import axios from 'axios';
-import { assets } from '../assets/assets'; // สำหรับโลโก้ (ถ้ามี)
+import { assets } from '../assets/assets'; 
 
 const ReceiptPage = () => {
     const { backendUrl, token, currency } = useContext(ShopContext);
-    const { orderId } = useParams(); // ดึง orderId จาก URL
+    const { orderId } = useParams(); L
     const [order, setOrder] = useState(null);
 
     useEffect(() => {
@@ -31,7 +31,7 @@ const ReceiptPage = () => {
 
     // ฟังก์ชันสำหรับพิมพ์
     const handlePrint = () => {
-        window.print(); // สั่งให้เบราว์เซอร์เปิดหน้าต่างพิมพ์
+        window.print(); 
     };
 
     return (

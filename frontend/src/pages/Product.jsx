@@ -73,17 +73,7 @@ const Product = () => {
         </div>
       </div>
 
-      {/* Description & Review Section */}
-      {/* <div className='mt-20'>
-        <div className='flex'>
-          <b className='border border-gray-300 px-5 py-3 text-sm'>Description</b>
-          <p className='border border-gray-300 px-5 py-3 text-sm'>Reviews (122)</p>
-        </div>
-        <div className='flex flex-col gap-4 border border-gray-300 px-6 py-6 text-sm text-gray-500'>
-          <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Blanditiis corrupti temporibus iure deleniti commodi ad distinctio, vero explicabo, reprehenderit quasi perspiciatis atque velit sunt laborum facere officiis consequatur quidem dicta!</p>
-          <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Sunt, delectus consequatur vero ab, quisquam consectetur nemo distinctio enim veritatis, quibusdam iste. Odit fugiat fugit voluptate laboriosam consectetur excepturi voluptatum molestiae.</p>
-        </div>
-      </div> */}
+      
 
       {/* -------- display related product ---------- */}
       <RelatedProducts categories={productData.Categories} productType={productData.ProductType} />

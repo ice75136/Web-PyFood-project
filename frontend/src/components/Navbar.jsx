@@ -15,10 +15,10 @@ const Navbar = () => {
         setCartItems({})
     }
 
-    // --- 1. สร้างฟังก์ชันสำหรับจัดการ Class ของ NavLink ---
+
     // ฟังก์ชันนี้จะรับ { isActive } มาจาก NavLink
     const getNavLinkClass = ({ isActive }) => {
-        const baseClasses = 'flex flex-col items-center gap-1 font-semibold group'; // <-- 'group' สำหรับ hover
+        const baseClasses = 'flex flex-col items-center gap-1 font-semibold group'; 
         
         // ถ้าลิงก์นี้ active (ตรงกับ URL ปัจจุบัน) ให้เปลี่ยนสีข้อความ
         if (isActive) {

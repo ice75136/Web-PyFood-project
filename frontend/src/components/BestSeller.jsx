@@ -5,9 +5,7 @@ import ProductItem from './ProductItem';
 
 const BestSeller = () => {
 
-    // --- 1. เปลี่ยนจาก products เป็น bestSellers ---
     const { bestSellers } = useContext(ShopContext);
-    // (ไม่จำเป็นต้องใช้ state หรือ useEffect ใน component นี้แล้ว)
 
     return (
         <div className='my-10'>
@@ -20,7 +18,6 @@ const BestSeller = () => {
 
             <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-y-6'>
                {
-                    // --- 2. Map ข้อมูลจาก bestSellers ---
                     bestSellers.map((item) => (
                         <ProductItem 
                             key={item.id} 

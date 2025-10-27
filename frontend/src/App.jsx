@@ -7,7 +7,6 @@ import Contact from './pages/Contact';
 import Product from './pages/Product';
 import Login from './pages/Login';
 import PlaceOrder from './pages/PlaceOrder';
-// import Orders from './pages/Orders';
 import Navbar from './components/Navbar';
 import Cart from './pages/Cart';
 import Footer from './components/Footer';
@@ -49,15 +48,14 @@ const App = () => {
         <Route path='/cart' element={<Cart />} />
         <Route path='/login' element={<Login />} />
         <Route path='/place-order' element={<PlaceOrder />} />
-        {/* <Route path='/orders' element={<Orders />} /> */}
+        
         <Route path='/verify' element={<Verify />} />
         <Route path='/order/receipt/:orderId' element={<ReceiptPage />} />
 
         <Route path='/profile' element={<Profile />}>
-          {/* หน้าย่อยจะถูกแสดงผลที่นี่ */}
-          <Route index element={<ProfileInfo />} /> {/* <-- หน้าแรกของโปรไฟล์ ( /profile ) */}
-          <Route path='orders' element={<MyOrders />} /> {/* <-- หน้าประวัติการสั่งซื้อ ( /profile/orders ) */}
-          <Route path='addresses' element={<MyAddresses />} /> {/*<-- หน้าที่อยู่ ( /profile/addresses ) */}
+          <Route index element={<ProfileInfo />} /> 
+          <Route path='orders' element={<MyOrders />} /> 
+          <Route path='addresses' element={<MyAddresses />} /> 
         </Route>
       </Routes>
       <Footer />
