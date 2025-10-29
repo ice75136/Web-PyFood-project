@@ -7,15 +7,16 @@ import List from './pages/List';
 import Orders from './pages/Orders';
 import Login from './components/Login';
 import { ToastContainer } from 'react-toastify';
-import { AdminProvider, useAdmin } from './context/AdminContext'; // 1. Import Provider และ Hook
+import { AdminProvider, useAdmin } from './context/AdminContext';
 import Dashboard from './pages/Dashboard';
+import AdminReceiptPage from './pages/AdminReceiptPage'; // 1. Import หน้าใบเสร็จ
 
 export const backendUrl = import.meta.env.VITE_BACKEND_URL;
 export const currency = '฿';
 
 // สร้าง Component ใหม่เพื่อให้อยู่ภายใต้ Provider และเข้าถึง Context ได้
 const AppContent = () => {
-    const { token, setToken } = useAdmin(); // 2. ดึง token และ setToken มาจาก Context
+    const { token, setToken } = useAdmin(); // ดึง token และ setToken มาจาก Context
 
     return (
         <div className='bg-gray-50 min-h-screen'>
@@ -30,7 +31,6 @@ const AppContent = () => {
                 draggable
                 pauseOnHover
                 theme="light"
-                
             />
             {token === ""
                 ? <Login setToken={setToken} />
@@ -41,11 +41,15 @@ const AppContent = () => {
                         <Sidebar />
                         <div className='flex-1 p-4 sm:p-6 text-gray-600'>
                             <Routes>
-                                {/* 3. ไม่ต้องส่ง token เป็น prop แล้ว */}
+                                <Route path='/' element={<Dashboard />} />
                                 <Route path='/dashboard' element={<Dashboard />} />
                                 <Route path='/add' element={<Add />} />
                                 <Route path='/list' element={<List />} />
                                 <Route path='/orders' element={<Orders />} />
+                                
+                                {/* 2. เพิ่ม Route สำหรับหน้าใบเสร็จที่นี่ */}
+                                <Route path='/receipt/:orderId' element={<AdminReceiptPage />} />
+                                
                             </Routes>
                         </div>
                     </div>
@@ -57,7 +61,7 @@ const AppContent = () => {
 
 const App = () => {
     return (
-        // 4. ครอบ AppContent ด้วย AdminProvider
+        // 3. ครอบ AppContent ด้วย AdminProvider
         <AdminProvider>
             <AppContent />
         </AdminProvider>

@@ -1,5 +1,5 @@
 import express from 'express'
-import {placeOrder, placeOrderStripe, listAllOrders, updateStatus, verifyStripe, getMyOrders, uploadPaymentSlip, cancelOrder, getOrderById} from '../controllers/orderController.js'
+import {placeOrder, placeOrderStripe, listAllOrders, verifyStripe, getMyOrders, uploadPaymentSlip, cancelOrder, getOrderById, getOrderByAdmin, updateOrderStatus} from '../controllers/orderController.js'
 import adminAuth from '../middleware/adminAuth.js'
 import authUser from '../middleware/auth.js'
 import upload from '../middleware/multer.js'
@@ -8,7 +8,8 @@ const orderRouter = express.Router()
 
 // Admin Features
 orderRouter.get('/orderlist',adminAuth,listAllOrders)
-orderRouter.post('/status',adminAuth,updateStatus)
+orderRouter.post('/status',adminAuth,updateOrderStatus)
+orderRouter.get('/admin-receipt/:orderId', adminAuth, getOrderByAdmin);
 
 // Payment Features
 orderRouter.post('/place',authUser,placeOrder)

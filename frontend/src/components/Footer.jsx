@@ -4,7 +4,7 @@ import { assets } from '../assets/assets'
 const Footer = () => {
   return (
     <div>
-        <div className='flex flex-col sm:grid grid-cols-[3fr_1fr_1fr] gap-14 my-10 mt-40 text-sm'>
+        <div className='flex flex-col sm:grid grid-cols-[3fr_1fr] gap-14 my-10 mt-40 text-sm border-t border-gray-300 pt-6'>
 
             <div>
                 <img src={assets.logo} className='mb-5 w-20' alt="" />
@@ -13,15 +13,15 @@ const Footer = () => {
                     ต.ท้ายบ้านใหม่ อ.เมืองสมุทรปราการ จ.สมุทรปราการ 10280
                 </p>
             </div>
-            <div>
+            {/* <div>
                 <p className='text-xl font-medium mb-5'>COMPANY</p>
                 <ul className='flex flex-col gap-1 text-gray-600'>
                     <li>HOME</li>
                     <li>About us</li>
                     <li>Delivery</li>
-                    {/* <li>Privacy policy</li> */}
+                    <li>Privacy policy</li>
                 </ul>
-            </div>
+            </div> */}
 
             <div>
                 <p className='text-xl font-medium mb-5'>ติดต่อ</p>

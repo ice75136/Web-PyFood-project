@@ -239,6 +239,19 @@ const MyOrders = () => {
                                     <p className='text-sm'>{currency}{item.price_per_unit}</p>
                                 </div>
                             ))}
+
+                            {(order.order_status === 'Shipped' || order.order_status === 'Completed') && order.tracking_code && (
+                                <div className='mt-3 pt-3 border-t border-gray-200 border-dashed'>
+                                    <h4 className='font-semibold text-sm mb-1'>ข้อมูลการจัดส่ง</h4>
+                                    <p className='text-sm text-gray-600'>
+                                        บริการขนส่ง: <span className='font-medium text-gray-800'>{order.shipping_carrier}</span>
+                                    </p>
+                                    <p className='text-sm text-gray-600'>
+                                        รหัสขนส่ง: <span className='font-medium text-gray-800'>{order.tracking_code}</span>
+                                        {/* (Optional) คุณสามารถเพิ่มปุ่มติดตามพัสดุตรงนี้ได้ */}
+                                    </p>
+                                </div>
+                            )}
                             
                             <div className='flex justify-between items-center border-t pt-3'>
                                 <p className='text-sm'>ยอดรวม: <span className='font-semibold text-base'>{currency}{order.total_amount}</span></p>

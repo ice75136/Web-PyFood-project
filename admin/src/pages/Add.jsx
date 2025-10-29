@@ -107,7 +107,7 @@ const Add = () => {
             <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-[500px]'>
                 <div>
                     <p className='mb-2'>ประเภทสินค้า (เลือกได้หลายอย่าง)</p>
-                    <div className='flex flex-col gap-2 p-3 border rounded-md'>
+                    <div className='flex flex-col gap-2 p-3 border border-gray-300 rounded-md'>
                         <label className='flex items-center gap-2 cursor-pointer'>
                             <input type="checkbox" value="1" checked={selectedCategories.includes("1")} onChange={handleCategoryChange} /> หมู
                         </label>
