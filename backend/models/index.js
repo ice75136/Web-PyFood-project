@@ -25,9 +25,9 @@ db.OrderItem = OrderItem;
 db.User.hasMany(db.UserAddress, { foreignKey: 'user_id' });
 db.UserAddress.belongsTo(db.User, { foreignKey: 'user_id' });
 
-// Category <-> Product (Many-to-Many)
-db.Category.belongsToMany(db.Product, { through: 'product_categories', foreignKey: 'category_id', timestamps: false });
-db.Product.belongsToMany(db.Category, { through: 'product_categories', foreignKey: 'product_id', timestamps: false });
+// Category <-> Product (One-to-Many)
+db.Category.hasMany(db.Product, { foreignKey: 'category_id' });
+db.Product.belongsTo(db.Category, { foreignKey: 'category_id' });
 
 // ProductType <-> Product (One-to-Many)
 db.ProductType.hasMany(db.Product, { foreignKey: 'product_type_id' });

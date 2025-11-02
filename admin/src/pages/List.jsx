@@ -149,7 +149,7 @@ const List = () => {
             >
               <img className={`w-12 h-12 object-cover ${!item.is_active ? 'opacity-50' : ''}`} src={item.image_url} alt={item.name} />
               <p>{item.name}</p>
-              <p className='text-center'> {item.Categories && item.Categories.length > 0 ? item.Categories.map(cat => cat.name).join(', ') : 'ไม่มีหมวดหมู่'}</p>
+              <p className='text-center'>{item.Category ? item.Category.name : 'ไม่มีหมวดหมู่'}</p>
               <p className='text-center'>{item.ProductType.name}</p>
               <p className='text-center'>{item.price}</p>
               <p className={`text-center font-semibold ${item.stock_quantity === 0 ? 'text-red-600' : ''}`}>{item.stock_quantity}</p>
