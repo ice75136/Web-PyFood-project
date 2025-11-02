@@ -3,25 +3,28 @@ import axios from 'axios'
 import { backendUrl } from '../App'
 import { toast } from 'react-toastify'
 import { useAdmin } from '../context/AdminContext'
-import { assets } from '../assets/assets' // Import assets
+import { assets } from '../assets/assets'
 
 const EditProduct = ({ open, onClose, product, fetchList }) => {
-    const { token } = useAdmin(); // ดึง token จาก Context
+    const { token } = useAdmin(); // 1. ดึง token จาก Context
     const [image1, setImage1] = useState(null);
     const [image2, setImage2] = useState(null);
     const [image3, setImage3] = useState(null);
     const [image4, setImage4] = useState(null);
     const [oldImages, setOldImages] = useState([]);
-    const [selectedCategories, setSelectedCategories] = useState([]);
+    
+    // --- 2. ลบ selectedCategories State ---
     
     const [formData, setFormData] = useState({
         id: "",
         name: "",
         description: "",
         product_type_id: "",
+        category_id: "", // <-- 3. เพิ่ม category_id
         price: "",
-        sizes: "", 
+        sizes: "", // State นี้จะเก็บน้ำหนัก (เช่น "100")
         stock_quantity: "",
+        // (ลบ bestseller)
     });
 
     useEffect(() => {
@@ -31,16 +34,12 @@ const EditProduct = ({ open, onClose, product, fetchList }) => {
                 name: product.name || "",
                 description: product.description || "",
                 product_type_id: product.product_type_id || "",
+                category_id: product.category_id || "", // <-- 4. ตั้งค่า category_id
                 price: product.price || "",
-                // ดึงข้อมูลตัวแรกจาก Array (ถ้ามี)
                 sizes: product.sizes && product.sizes.length > 0 ? product.sizes[0] : "", 
                 stock_quantity: product.stock_quantity || "",
             });
-            if (product.Categories) {
-                setSelectedCategories(product.Categories.map(cat => String(cat.id)));
-            } else {
-                setSelectedCategories([]);
-            }
+            // --- 5. ลบการตั้งค่า selectedCategories ---
             setOldImages(product.images && product.images.length > 0 ? product.images : [product.image_url]);
             setImage1(null); setImage2(null); setImage3(null); setImage4(null);
         }
@@ -56,14 +55,7 @@ const EditProduct = ({ open, onClose, product, fetchList }) => {
         }));
     };
     
-    const handleCategoryChange = (e) => {
-        const categoryId = e.target.value;
-        setSelectedCategories(prev =>
-            prev.includes(categoryId)
-                ? prev.filter(id => id !== categoryId)
-                : [...prev, categoryId]
-        );
-    };
+    // --- 6. ลบ handleCategoryChange (checkbox) ---
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -74,14 +66,15 @@ const EditProduct = ({ open, onClose, product, fetchList }) => {
             data.append("name", formData.name);
             data.append("description", formData.description);
             data.append("product_type_id", formData.product_type_id);
+            data.append("category_id", formData.category_id); // <-- 7. ส่ง category_id (ตัวเดียว)
             data.append("price", formData.price);
             data.append("stock_quantity", formData.stock_quantity);
-
+            
             // แปลงน้ำหนักเดียวกลับไปเป็น Array
             const sizesArray = formData.sizes ? [formData.sizes] : [];
             data.append("sizes", JSON.stringify(sizesArray));
             
-            data.append("category_ids", JSON.stringify(selectedCategories));
+            // --- 8. ลบการส่ง category_ids (Array) ---
 
             if (image1) data.append("image1", image1);
             if (image2) data.append("image2", image2);
@@ -91,7 +84,7 @@ const EditProduct = ({ open, onClose, product, fetchList }) => {
             const response = await axios.put(
                 backendUrl + "/api/product/update",
                 data,
-                { headers: { Authorization: `Bearer ${token}` } }
+                { headers: { Authorization: `Bearer ${token}` } } // ใช้ token จาก context
             );
 
             if (response.status === 200) {
@@ -137,25 +130,21 @@ const EditProduct = ({ open, onClose, product, fetchList }) => {
                     </div>
 
                     <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 w-full'>
+                        {/* --- 9. เปลี่ยน Checkbox กลับเป็น <select> --- */}
                         <div>
-                            <p className='mb-2'>ประเภทสินค้า (เลือกได้หลายอย่าง)</p>
-                            <div className='flex flex-col gap-2 p-3 border rounded-md'>
-                                <label className='flex items-center gap-2 cursor-pointer'>
-                                    <input type="checkbox" value="1" checked={selectedCategories.includes("1")} onChange={handleCategoryChange} /> หมู
-                                </label>
-                                <label className='flex items-center gap-2 cursor-pointer'>
-                                    <input type="checkbox" value="2" checked={selectedCategories.includes("2")} onChange={handleCategoryChange} /> ไก่
-                                </label>
-                                <label className='flex items-center gap-2 cursor-pointer'>
-                                    <input type="checkbox" value="3" checked={selectedCategories.includes("3")} onChange={handleCategoryChange} /> หมูผสมไก่
-                                </label>
-                                <label className='flex items-center gap-2 cursor-pointer'>
-                                    <input type="checkbox" value="4" checked={selectedCategories.includes("4")} onChange={handleCategoryChange} /> น้ำพริก
-                                </label>
-                                <label className='flex items-center gap-2 cursor-pointer'>
-                                    <input type="checkbox" value="5" checked={selectedCategories.includes("5")} onChange={handleCategoryChange} /> น้ำจิ้ม
-                                </label>
-                            </div>
+                            <p className='mb-2'>ประเภทสินค้า</p>
+                            <select 
+                                className='w-full px-3 py-2 border rounded' 
+                                name="category_id" // <-- ตั้งชื่อ
+                                value={formData.category_id} // <-- ผูกกับ formData
+                                onChange={handleChange} // <-- ใช้ handleChange
+                            >
+                                <option value="1">หมู</option>
+                                <option value="2">ไก่</option>
+                                <option value="3">หมูผสมไก่</option>
+                                <option value="4">น้ำพริก</option>
+                                <option value="5">น้ำจิ้ม</option>
+                            </select>
                         </div>
 
                         <div>
@@ -182,9 +171,19 @@ const EditProduct = ({ open, onClose, product, fetchList }) => {
                         </div>
                         <div>
                             <p className='mb-2'>น้ำหนักสินค้า (กรัม)</p>
-                            <input placeholder='100' className='w-full px-3 py-2 border rounded' name="sizes" value={formData.sizes} onChange={handleChange} type="number" />
+                            <input 
+                                placeholder='100' 
+                                className='w-full px-3 py-2 border rounded' 
+                                name="sizes" 
+                                value={formData.sizes} 
+                                onChange={handleChange} 
+                                type="number"
+                            />
                         </div>
                     </div>
+
+                    {/* --- ลบ Bestseller Checkbox --- */}
+
                     <div className='flex items-center justify-end w-full gap-4 mt-4'>
                         <button className='w-28 py-2 bg-gray-300 text-black cursor-pointer rounded' onClick={onClose} type="button">ยกเลิก</button>
                         <button className='w-28 py-2 bg-blue-600 text-white cursor-pointer rounded' type="submit">บันทึก</button>
