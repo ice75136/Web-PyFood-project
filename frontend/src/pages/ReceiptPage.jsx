@@ -1,29 +1,13 @@
-import React, { useContext, useEffect, useState, useRef } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
 import axios from 'axios';
-import { assets } from '../assets/assets';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
-import './ReceiptPage.css'; 
-
-// Object สำหรับแปลสถานะ
-const statusThai = {
-    pending: "ที่ต้องชำระ",
-    awaiting_verification: "รอการตรวจสอบ",
-    payment_rejected: "การชำระเงินไม่ถูกต้อง",
-    Processing: "กำลังเตรียมจัดส่ง",
-    Shipped: "จัดส่งแล้ว",
-    Completed: "สำเร็จแล้ว",
-    Cancelled: "ยกเลิก"
-};
+import { assets } from '../assets/assets'; 
 
 const ReceiptPage = () => {
     const { backendUrl, token, currency } = useContext(ShopContext);
-    const { orderId } = useParams();
+    const { orderId } = useParams(); L
     const [order, setOrder] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const receiptRef = useRef(null);
 
     useEffect(() => {
         const fetchOrder = async () => {
@@ -41,103 +25,84 @@ const ReceiptPage = () => {
         fetchOrder();
     }, [token, orderId]);
 
-    const handleDownloadPDF = () => {
-        const input = receiptRef.current;
-        if (!input) return;
-        setLoading(true);
-
-        html2canvas(input, { scale: 2, useCORS: true })
-            .then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                pdf.save(`receipt-order-${orderId}.pdf`);
-                setLoading(false);
-            });
-    };
-
     if (!order) {
-        return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>กำลังโหลดใบเสร็จ...</div>;
+        return <div className='flex justify-center items-center min-h-[80vh]'>กำลังโหลดใบเสร็จ...</div>;
     }
 
+    // ฟังก์ชันสำหรับพิมพ์
+    const handlePrint = () => {
+        window.print(); 
+    };
+
     return (
-        <div className="receipt-wrapper">
+        <div className='max-w-4xl mx-auto p-8 my-10 border rounded-lg bg-white shadow-lg print:shadow-none print:border-none'>
             {/* --- ส่วนปุ่ม (จะถูกซ่อนตอนพิมพ์) --- */}
-            <div className='receipt-controls'>
-                <Link to="/profile/orders">&larr; กลับไปหน้ารายการสั่งซื้อ</Link>
-                <button 
-                    onClick={handleDownloadPDF} 
-                    disabled={loading}
-                >
-                    {loading ? 'กำลังสร้าง PDF...' : 'ดาวน์โหลด PDF'}
+            <div className='flex justify-between items-center mb-8 print:hidden'>
+                <Link to="/profile/orders" className='text-blue-600 hover:underline'>&larr; กลับไปหน้ารายการสั่งซื้อ</Link>
+                <button onClick={handlePrint} className='px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700'>
+                    พิมพ์ / บันทึกเป็น PDF
                 </button>
             </div>
 
-            {/* --- เนื้อหาใบเสร็จ (ส่วนที่จะถูก "ถ่ายรูป") --- */}
-            <div ref={receiptRef} className='receipt-container'>
-                <div className='receipt-header'>
-                    <div>
-                        <h1>ใบเสร็จรับเงิน</h1>
-                        <p>Order ID: #{order.id}</p>
-                        <p>วันที่: {new Date(order.order_date).toLocaleDateString('th-TH', {
-                            year: 'numeric', month: 'long', day: 'numeric'
-                        })}</p>
-                    </div>
-                    <img src={assets.logo} alt="PY Food Logo" />
+            {/* --- ส่วนหัวใบเสร็จ --- */}
+            <div className='flex justify-between items-start border-b pb-6 mb-6'>
+                <div>
+                    <h1 className='text-3xl font-bold'>ใบเสร็จรับเงิน</h1>
+                    <p className='text-gray-500'>Order ID: #{order.id}</p>
+                    <p className='text-gray-500'>วันที่: {new Date(order.order_date).toLocaleDateString('th-TH')}</p>
                 </div>
+                <img src={assets.ocha_logo} alt="PY Food Logo" className='w-32' />
+            </div>
 
-                <div className='receipt-details-grid'>
-                    <div>
-                        <h3>ที่อยู่จัดส่ง</h3>
-                        <p>{order.UserAddress.first_name} {order.UserAddress.last_name}</p>
-                        <p>{order.UserAddress.phone}</p>
-                        <p>{order.UserAddress.house_number}, {order.UserAddress.sub_district}, {order.UserAddress.district}, {order.UserAddress.province} {order.UserAddress.postal_code}</p>
-                    </div>
-                    <div>
-                        <h3>วิธีการชำระเงิน</h3>
-                        <p>{order.payment_method === 'cod' ? 'เก็บเงินปลายทาง' : 'โอนเงินผ่านธนาคาร'}</p>
-                        <h3 style={{ marginTop: '1rem' }}>สถานะ</h3>
-                        <p>{statusThai[order.order_status] || order.order_status}</p>
-                    </div>
+            {/* --- ส่วนข้อมูลลูกค้าและที่อยู่ --- */}
+            <div className='grid grid-cols-2 gap-8 mb-8'>
+                <div>
+                    <h3 className='font-semibold mb-2'>ที่อยู่จัดส่ง</h3>
+                    <p>{order.UserAddress.first_name} {order.UserAddress.last_name}</p>
+                    <p>{order.UserAddress.phone}</p>
+                    <p>{order.UserAddress.house_number}, {order.UserAddress.sub_district}, {order.UserAddress.district}, {order.UserAddress.province} {order.UserAddress.postal_code}</p>
                 </div>
+                <div>
+                    <h3 className='font-semibold mb-2'>วิธีการชำระเงิน</h3>
+                    <p>{order.payment_method === 'cod' ? 'เก็บเงินปลายทาง' : 'โอนเงินผ่านธนาคาร'}</p>
+                    <h3 className='font-semibold mt-4 mb-2'>สถานะ</h3>
+                    <p>{order.order_status}</p>
+                </div>
+            </div>
 
-                <table className='receipt-table'>
-                    <thead>
-                        <tr>
-                            <th>สินค้า</th>
-                            <th className='text-center'>จำนวน</th>
-                            <th className='text-right'>ราคาต่อหน่วย</th>
-                            <th className='text-right'>ราคารวม</th>
+            {/* --- ส่วนตารางรายการสินค้า --- */}
+            <table className='w-full text-left mb-8'>
+                <thead className='bg-gray-100'>
+                    <tr>
+                        <th className='p-3'>สินค้า</th>
+                        <th className='p-3 text-center'>จำนวน</th>
+                        <th className='p-3 text-right'>ราคาต่อหน่วย</th>
+                        <th className='p-3 text-right'>ราคารวม</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {order.OrderItems.map(item => (
+                        <tr key={item.id} className='border-b'>
+                            <td className='p-3'>{item.Product.name}</td>
+                            <td className='p-3 text-center'>{item.quantity}</td>
+                            <td className='p-3 text-right'>{currency}{item.price_per_unit}</td>
+                            <td className='p-3 text-right'>{currency}{(item.quantity * item.price_per_unit).toFixed(2)}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        {order.OrderItems.map(item => (
-                            <tr key={item.id}>
-                                <td>{item.Product.name}</td>
-                                <td className='text-center'>{item.quantity}</td>
-                                <td className='text-right'>{currency}{Number(item.price_per_unit).toFixed(2)}</td>
-                                <td className='text-right'>{currency}{(item.quantity * item.price_per_unit).toFixed(2)}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                    ))}
+                </tbody>
+            </table>
 
-                <div className='receipt-summary'>
-                    <div className='receipt-summary-box'>
-                        <div className='receipt-summary-line'>
-                            <span>ยอดรวม (ไม่รวมค่าส่ง)</span>
-                            <span>{currency}{(order.total_amount - 50).toFixed(2)}</span> 
-                        </div>
-                        <div className='receipt-summary-line'>
-                            <span>ค่าจัดส่ง</span>
-                            <span>{currency}{50.00.toFixed(2)}</span>
-                        </div>
-                        <div className='receipt-summary-total'>
-                            <span>ยอดสุทธิ</span>
-                            <span>{currency}{Number(order.total_amount).toFixed(2)}</span>
-                        </div>
+            {/* --- ส่วนสรุปยอด --- */}
+            <div className='flex justify-end'>
+                <div className='w-full max-w-xs'>
+                    <div className='flex justify-between mb-2'>
+                        <span className='text-gray-600'>ยอดรวม</span>
+                        <span>{currency}{order.total_amount}</span>
+                    </div>
+                    {/* (ถ้ามีค่าจัดส่ง สามารถเพิ่มได้) */}
+                    <div className='flex justify-between text-xl font-bold border-t pt-2'>
+                        <span>ยอดสุทธิ</span>
+                        <span>{currency}{order.total_amount}</span>
                     </div>
                 </div>
             </div>

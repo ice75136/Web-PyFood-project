@@ -318,32 +318,21 @@ const getMyOrders = async (req, res) => {
 };
 
 // update order status from AdminPanel
-const updateOrderStatus = async (req, res) => {
+const updateStatus = async (req,res) => {
     try {
-        // 1. รับข้อมูลใหม่ (รวม tracking)
-        const { orderId, status, shipping_carrier, tracking_code } = req.body;
+        const { orderId, status } = req.body;
 
-        // 2. [Logic ใหม่] ตรวจสอบเงื่อนไขถ้าจะเปลี่ยนเป็น "จัดส่งแล้ว"
-        if (status === 'Shipped') {
-            if (!shipping_carrier || !tracking_code) {
-                return res.status(400).json({ message: "กรุณาระบุบริการขนส่งและรหัสขนส่ง ก่อนเปลี่ยนสถานะ" });
-            }
-        }
-
+        // ค้นหา Order จาก ID
         const order = await db.Order.findByPk(orderId);
+
         if (!order) {
             return res.status(404).json({ message: "Order not found" });
         }
 
-        // 3. บันทึกข้อมูล
+        // อัปเดตสถานะ
         order.order_status = status;
-        // ถ้าสถานะคือ Shipped ให้บันทึกข้อมูลขนส่งไปด้วย
-        if (status === 'Shipped') {
-            order.shipping_carrier = shipping_carrier;
-            order.tracking_code = tracking_code;
-        }
-        
         await order.save();
+
         res.status(200).json({ message: "Order status updated successfully", order });
 
     } catch (error) {
@@ -380,27 +369,4 @@ const getOrderById = async (req, res) => {
     }
 };
 
-const getOrderByAdmin = async (req, res) => {
-    try {
-        const { orderId } = req.params; // ID จาก URL
-
-        const order = await db.Order.findOne({
-            where: { id: orderId }, // <-- ไม่ต้องเช็ค user_id
-            include: [
-                { model: db.UserAddress },
-                { model: db.User, attributes: ['username', 'email'] },
-                { model: db.OrderItem, include: { model: db.Product } }
-            ]
-        });
-
-        if (!order) {
-            return res.status(404).json({ message: "ไม่พบคำสั่งซื้อ" });
-        }
-        res.status(200).json(order);
-    } catch (error) {
-        console.error("Error fetching order by ID for admin:", error);
-        res.status(500).json({ message: "เกิดข้อผิดพลาด" });
-    }
-};
-
-export {verifyStripe, placeOrder, uploadPaymentSlip, cancelOrder, placeOrderStripe,  listAllOrders, getMyOrders, updateOrderStatus, getOrderById, getOrderByAdmin}
+export {verifyStripe, placeOrder, uploadPaymentSlip, cancelOrder, placeOrderStripe,  listAllOrders, getMyOrders, updateStatus, getOrderById}

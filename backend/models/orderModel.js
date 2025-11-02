@@ -23,14 +23,7 @@ const Order = sequelize.define('Order', {
         type: DataTypes.STRING,
         allowNull: true
     },
-    shipping_carrier: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
-    tracking_code: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
+    // Foreign Keys ที่จะเชื่อมกับตารางอื่น
     user_id: {
         type: DataTypes.INTEGER,
         allowNull: false

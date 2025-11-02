@@ -7,12 +7,12 @@ import OurPolicy from '../components/OurPolicy'
 
 const Home = () => {
   return (
-    <div className='border-t border-gray-300 pt-5'>
+    <div>
         <Hero/>
         <LatestCollection/>
         <BestSeller/>
-        {/* <OurPolicy/> */}
-        
+        <OurPolicy/>
+        {/* <NewsletterBox/> */}
     </div>
   )
 }

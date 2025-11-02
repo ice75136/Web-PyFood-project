@@ -4,7 +4,7 @@ import { Outlet } from 'react-router-dom' // <-- Import Outlet
 
 const Profile = () => {
     return (
-        <div className='flex flex-col sm:flex-row min-h-[80vh] border-t border-gray-300'>
+        <div className='flex flex-col sm:flex-row min-h-[80vh] border-t'>
             {/* 1. แสดง Sidebar ด้านซ้าย */}
             <SidebarProfile />
 

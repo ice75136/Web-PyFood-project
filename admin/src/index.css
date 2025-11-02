@@ -2,7 +2,7 @@
 @import "tailwindcss";
 
 *{
-    font-family: "Noto Sans Thai", sans-serif;
+    font-family: Outfit;
 }
 
 select,input,textarea{

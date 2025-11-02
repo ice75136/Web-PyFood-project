@@ -16,10 +16,10 @@ const LatestCollection = () => {
   return (
     <div className='my-10'>
         <div className='text-center py-8 text-3xl'>
-            <Title text2={'สินค้าล่าสุดใน 10 อันดับแรก'}/>
-            {/* <p className='w-3/4 m-auto text-xs sm:text-sm md:text-base text-gray-600'>
+            <Title text2={'สินค้าล่าสุด'}/>
+            <p className='w-3/4 m-auto text-xs sm:text-sm md:text-base text-gray-600'>
             Lorem ipsum dolor sit amet consectetur adipisicing elit. Omnis, voluptates! Eaque fugiat expedita maiores quos.
-            </p> */}
+            </p>
         </div>
 
       {/* Rendering Products */}

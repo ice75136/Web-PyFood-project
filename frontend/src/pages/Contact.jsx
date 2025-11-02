@@ -2,14 +2,15 @@ import React from 'react'
 import Title from '../components/Title'
 import { assets } from '../assets/assets'
 
-const Contact = () => {
-    return (
-        <div>
-            <div className='text-2xl text-center pt-10 border-t border-gray-300'>
-                <Title text2={'ติดต่อ'} />
-            </div>
 
-            {/* --- 1. เพิ่ม div ครอบทั้งหมด และจำกัดความกว้าง --- */}
+const Contact = () => {
+  return (
+    <div>
+      
+      <div className='text-center text-2xl pt-10 border-t'>
+          <Title text2={'ติดต่อ'}/>
+      </div>
+
             <div className='my-10 mb-28 max-w-5xl mx-auto'> 
                 
                 <div className='flex flex-col md:flex-row gap-10'>
@@ -47,7 +48,9 @@ const Contact = () => {
                 </div>
             </div>
         </div>
-    )
+     
+
+  )
 }
 
 export default Contact

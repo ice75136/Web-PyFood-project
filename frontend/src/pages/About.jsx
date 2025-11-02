@@ -57,7 +57,7 @@ const About = () => {
             </div>
 
             {/* --- 2. ส่วนใหม่: วิสัยทัศน์ และ นโยบาย --- */}
-            <div className='my-20 p-8 rounded-lg'>
+            <div className='my-20 p-8 bg-gray-50 rounded-lg'>
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-12'>
 
                     {/* คอลัมน์ซ้าย: วิสัยทัศน์ (จัดกึ่งกลางและจำกัดความกว้าง) */}
@@ -111,32 +111,32 @@ const About = () => {
             </div>
 
             {/* --- 4. ส่วนทำไมต้องเลือกเรา (Why Choose Us) --- */}
-            {/* <div className='my-20'>
+            <div className='my-20'>
                 <div className='text-xl py-4 text-center'>
                     <Title text1={'ทำไมต้อง'} text2={'เลือกเรา'} />
                 </div>
 
                 <div className='flex flex-col md:flex-row text-sm text-center'>
-                    
+                    {/* Feature 1 */}
                     <div className='border border-gray-300 px-10 md:px-16 py-8 sm:py-20 flex flex-col items-center gap-5'>
                         <img src={assets.quality_icon} alt="คุณภาพ" className='w-16 h-16' />
                         <b className='text-lg'>วัตถุดิบคุณภาพ</b>
                         <p className='text-gray-600'>เราคัดสรรเนื้อสัตว์เกรด A และเครื่องปรุงอย่างดีที่สุด ปราศจากวัตถุกันเสีย</p>
                     </div>
-                    
+                    {/* Feature 2 */}
                     <div className='border border-gray-300 px-10 md:px-16 py-8 sm:py-20 flex flex-col items-center gap-5'>
                         <img src={assets.fresh_icon} alt="ความสดใหม่" className='w-16 h-16' />
                         <b className='text-lg'>สดใหม่ทุกวัน</b>
                         <p className='text-gray-600'>เราผลิตสินค้าใหม่ตามออเดอร์ ไม่มีการเก็บค้างสต็อก เพื่อให้คุณได้ลิ้มรสความสดใหม่อยู่เสมอ</p>
                     </div>
-                    
+                    {/* Feature 3 */}
                     <div className='border border-gray-300 px-10 md:px-16 py-8 sm:py-20 flex flex-col items-center gap-5'>
                         <img src={assets.clean_icon} alt="ความสะอาด" className='w-16 h-16' />
                         <b className='text-lg'>สะอาด ปลอดภัย</b>
                         <p className='text-gray-600'>ผ่านมาตรฐานการผลิต GMP และ อย. ทุกขั้นตอนการผลิตของเราสะอาดและมั่นใจได้</p>
                     </div>
                 </div>
-            </div> */}
+            </div>
 
             {/* --- 5. ส่วนกระบวนการผลิต (จัด Layout 2x2) --- */}
             <div className='my-20 p-8'>
