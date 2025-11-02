@@ -39,10 +39,6 @@ const Product = sequelize.define('Product', {
         type: DataTypes.BOOLEAN,
         defaultValue: false
     },
-    category_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true
-    },
     product_type_id: {
         type: DataTypes.INTEGER
     },

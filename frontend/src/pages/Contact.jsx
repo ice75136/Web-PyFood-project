@@ -17,7 +17,7 @@ const Contact = () => {
                     
                     {/* --- 2. คอลัมน์ซ้าย: แผนที่ (ปรับ w-full) --- */}
                     <div className='w-full md:w-1/2'>
-                        {/* <h3 className='text-2xl font-semibold mb-4'>ที่ตั้งของเรา</h3> */}
+                        <h3 className='text-2xl font-semibold mb-4'>ที่ตั้งของเรา</h3>
                         <div className='w-full overflow-hidden rounded-lg shadow-md'>
                             <iframe
                                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3878.645637827136!2d100.62528960977636!3d13.55731663877972!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x311d5883d5707d27%3A0xf7fd5100d846726c!2sP.Y.FOOD%20Company%20Limited!5e0!3m2!1sen!2sth!4v1761763702375!5m2!1sen!2sth"
